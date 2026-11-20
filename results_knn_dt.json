@@ -1,23 +1,23 @@
 {
   "image": {
     "knn": {
-      "acc": 0.55625,
+      "acc": 0.544,
       "params": {
         "k": 1,
         "metric": "cosine",
         "weighted": false,
-        "scaling": "sqrt_std"
+        "scaling": "standardize"
       }
     }
   },
   "sentiment": {
     "knn": {
-      "acc": 0.5908333333333333,
+      "acc": 0.6075,
       "params": {
-        "k": 20,
-        "metric": "cosine",
+        "k": 100,
+        "metric": "euclidean",
         "weighted": true,
-        "scaling": "standardize"
+        "scaling": "none"
       }
     }
   },
