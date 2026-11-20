@@ -11,7 +11,7 @@ def assign_clusters(features, centers):
     return distances.argmin(axis=1)
 
 
-def fit_kmeans(features, k=3, max_iter=100, seed=42):
+def fit_kmeans(features, k=3, max_iter=100, seed=123):
     features = np.asarray(features, dtype=float)
 
     # Start from k distinct random points
