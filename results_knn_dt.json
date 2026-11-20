@@ -12,12 +12,12 @@
   },
   "sentiment": {
     "knn": {
-      "acc": 0.5908333333333333,
+      "acc": 0.6095833333333334,
       "params": {
-        "k": 20,
-        "metric": "cosine",
+        "k": 70,
+        "metric": "euclidean",
         "weighted": true,
-        "scaling": "standardize"
+        "scaling": "none"
       }
     }
   },
