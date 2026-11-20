@@ -39,8 +39,8 @@ def setup():
     random.seed(SEED)
     np.random.seed(SEED)
 
-    # Create the plots folder if it does not already exist
-    os.makedirs("plots", exist_ok=True)
+    # Create the figures folder if it does not already exist
+    os.makedirs("figures", exist_ok=True)
 
     # Display the library versions and environment information
     print("Environment:", ENVIRONMENT)
