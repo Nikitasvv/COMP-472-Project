@@ -14,7 +14,7 @@ from knn import normalize_rows, find_neighbors, vote
 from utils import prep, accuracy
 
 # Different numbers of neighbors to test for K-NN
-KS = (1, 3, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
+KS = (1, 3, 5, 10, 20, 50, 100)
 
 # Test different scaling methods with Euclidean and cosine distance
 SETTINGS = [
@@ -38,13 +38,8 @@ def run_knn(data, state):
         dataset = data[task]
         print(f"\n=== {task} ===")
 
-        # Test an additional scaling method for image data
-        settings = SETTINGS.copy()
-        if task == "image":
-            settings.append(("sqrt_std", "cosine"))
-
         # Try each combination of scaling and distance metric
-        for scaling, metric in settings:
+        for scaling, metric in SETTINGS:
 
             # Apply the selected scaling to training and validation features
             train, val = prep(
@@ -117,16 +112,6 @@ def run_knn(data, state):
                 curves[(task, "standardize", "cosine", weighted)],
                 marker="o",
                 label="weighted" if weighted else "unweighted",
-            )
-
-        # Add an extra curve for image data using sqrt-std scaling
-        if task == "image":
-            graph.plot(
-                KS,
-                curves[(task, "sqrt_std", "cosine", True)],
-                marker="o",
-                linestyle="--",
-                label="sqrt-std scaling (weighted)",
             )
 
         # Add labels to make the graphs easier to understand
