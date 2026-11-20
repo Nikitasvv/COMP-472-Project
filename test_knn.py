@@ -122,7 +122,7 @@ def run_knn(data, state):
 
     # Adjust spacing, save the graphs, and close the figure
     plt.tight_layout()
-    plt.savefig("plots/knn_k.png", dpi=120)
+    plt.savefig("figures/knn_k.png", dpi=120)
     plt.close()
 
 
