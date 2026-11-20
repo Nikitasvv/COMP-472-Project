@@ -85,18 +85,10 @@ def analyze_task(task, data, best):
     confusion.to_csv(folder / "confusion_matrix.csv")
 
     # Find the validation samples where the prediction was incorrect
-    # The positions refer to the validation array, not the original CSV IDs
     wrong = np.flatnonzero(actual != predicted)
-
-    # Store the position, correct label, and predicted label of each mistake
     mistakes = pd.DataFrame(
-        {
-            "validation_position": wrong,
-            "actual_label": actual[wrong],
-            "predicted_label": predicted[wrong],
-        }
+        {"actual_label": actual[wrong], "predicted_label": predicted[wrong]}
     )
-    mistakes.to_csv(folder / "misclassified_samples.csv", index=False)
 
     # Group mistakes by actual and predicted class
     # Count each type of mistake and sort from most to least common
@@ -107,21 +99,6 @@ def analyze_task(task, data, best):
         .sort_values("count", ascending=False)
     )
     confused_pairs.to_csv(folder / "confused_pairs.csv", index=False)
-
-    # Save a summary with the best parameters and main performance results
-    pd.DataFrame(
-        [
-            {
-                "task": task,
-                "model": "k-NN",
-                "best_parameters": str(best[task]["knn"]["params"]),
-                "accuracy": accuracy,
-                "macro_f1": macro_f1,
-                "validation_samples": len(actual),
-                "incorrect_predictions": len(wrong),
-            }
-        ]
-    ).to_csv(folder / "summary.csv", index=False)
 
     # Print the model's accuracy, F1 score, and total number of mistakes
     print(f"\n--- {task.upper()}: k-NN error analysis ---")
