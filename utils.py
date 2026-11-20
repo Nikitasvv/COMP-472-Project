@@ -9,7 +9,7 @@ import pandas as pd
 # vote: turns neighbours' labels into a predicted class
 from knn import normalize_rows, find_neighbors, vote
 
-SEED = 42
+SEED = 123
 
 
 def load_train(path):
