@@ -56,9 +56,9 @@ def run_kmeans(data):
     plt.xticks(K_VALUES)
     plt.title("k-Means: inertia vs k (sentiment)")
     plt.tight_layout()
-    plt.savefig("plots/kmeans_inertia.png", dpi=120)
+    plt.savefig("figures/kmeans_inertia.png", dpi=120)
     plt.close()
-    print("Saved plots/kmeans_inertia.png")
+    print("Saved figures/kmeans_inertia.png")
 
     # For k=3: how many samples of each true class ended up in each cluster
     print("\nk=3: clusters (rows) vs true sentiment (columns)")
