@@ -3,60 +3,43 @@
 import numpy as np
 
 
+#node class for decision tree it represents 1 node in the tree
 class _Node:
-    """One node of the tree: internal nodes hold a split, leaves hold a class label."""
+    def __init__(self, *, feature=None, threshold=None, left=None, right=None, value=None):
+        self.feature = feature # feature index is for slitting the data
+        self.threshold = threshold # value is to use divide the samples into the left and the right child nodes
+        self.left = left # References to the Left child node
+        self.right = right # References to the Right child node
+        self.value = value # The predicted class label if the node is a leaf 
 
-    def __init__(
-        self,
-        *,
-        feature=None,
-        threshold=None,
-        left=None,
-        right=None,
-        value=None,
-        majority=None
-    ):
-        self.feature = feature  # index of the feature this node splits on
-        self.threshold = (
-            threshold  # samples with feature <= threshold go left, the rest go right
-        )
-        self.left = left
-        self.right = right
-        self.value = value  # predicted class (only set on leaves)
-        # Most common class among the training samples that reached this node. Every node
-        # keeps it so predict() can stop at any depth and still answer with a class.
-        self.majority = majority
-
-    def is_leaf(self):
+    def is_leaf(self): # if the value is none then it is not a leaf, none is to check if it is a leaf or not
         return self.value is not None
 
 
+# the training and prediction logic of the decision tree is done here
+#those parameters in tandem are used to control the growth of the tree
+# prevent overfitting and underfitting 
 class ScratchDecisionTree:
-    """Binary decision tree that picks the split with the largest Gini gain at every node.
+    def __init__(self, max_depth=None, min_samples_split=2, max_features=None, seed=42): 
+        self.max_depth = max_depth # Maximum depth the tree can reach and grow, None = no limits in the depth
+        self.min_samples_split = min_samples_split # Minumum number of samples required to split an internal node, default is 2
+        self.max_features = max_features # Number of proportion of features to consider when looking for the best split, None = all features are considered
+        self.seed = seed # control the randomnes so the results can be reproduced and easily debugged, current input is 42
+        self.root = None # Stores the root node of the trained tree
+        self.n_classes = None # Stores of different classes that are available
 
-    max_depth         : deepest level the tree may reach (None = grow until the leaves are pure)
-    min_samples_split : a node with fewer samples than this becomes a leaf
-    max_features      : features tried per split. None = all, float = fraction, int = count.
-                        Anything below "all" picks a random subset at each node.
-    seed              : makes the random feature choice reproducible
-    """
 
-    def __init__(self, max_depth=None, min_samples_split=2, max_features=None, seed=42):
-        self.max_depth = max_depth
-        self.min_samples_split = min_samples_split
-        self.max_features = max_features
-        self.seed = seed
-        self.root = None
-        self.n_classes = None
 
+#Calculates the Gini impurity of a set of labels y, given the number of classes n_classes.
+# 
     @staticmethod
     def _gini(y, n_classes):
-        """Gini impurity: 0 for a pure node, larger the more mixed the classes are."""
-        m = len(y)
+        m = len(y) #counts the nb of sample in the current node
         if m == 0:
             return 0.0
-        probs = np.bincount(y, minlength=n_classes) / m
-        return 1.0 - np.sum(probs**2)
+        counts = np.bincount(y, minlength=n_classes) # count about the nb of samples that are in each class
+        probs = counts / m # calculate the probability of each class by dividing the counts by the total number of samples
+        return 1.0 - np.sum(probs ** 2) # Gini formula
 
     def _candidate_features(self, n_features, rng):
         """Indices of the features this node is allowed to split on."""
@@ -68,6 +51,8 @@ class ScratchDecisionTree:
             k = min(n_features, max(1, int(self.max_features)))
         return rng.choice(n_features, size=k, replace=False)
 
+    
+    # Where the best split should happen, it iterates through the features and thresholds
     def _best_split(self, X, y, rng):
         """Return (feature, threshold, left_mask, right_mask) of the best split, or Nones if none helps."""
         n_samples, n_features = X.shape
