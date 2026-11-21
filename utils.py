@@ -84,7 +84,7 @@ def accuracy(true_labels, predicted_labels):
 
 def fit_predict(name, params, train_features, train_labels, eval_features, n_classes):
     """Scale, train one model and predict. Used by make_submission.py
-    Returns (predictions, model); k-NN has no trained model object, so it returns None there.
+    Returns (predictions, model); k-NN returns None; NN returns PyTorch model; Random Forest returns the original RandomForestModel.
     """
     scaled_train, scaled_eval = prep(params, train_features, eval_features)
 
@@ -105,5 +105,36 @@ def fit_predict(name, params, train_features, train_labels, eval_features, n_cla
 
         # Return the predictions
         return predictions, None
+
+    if name == "nn":
+        # Import here to avoid a circular import and keep the original PyTorch code together.
+        from neural_network import train_neural_network
+
+        model = train_neural_network(params, scaled_train, train_labels)
+        from neural_network import predict
+
+        predictions = predict(model, scaled_eval, model.classes_, model.batch_size_)
+        return predictions.astype(int), model
+
+    if name == "rf":
+        # Use the original from-scratch RandomForestModel, not sklearn.
+        # Class labels must be encoded as 0..n_classes-1 for Gini impurity
+        # and bootstrap tree fitting, then decoded after predictions.
+        from random_forest import RandomForestModel
+
+        classes = np.unique(train_labels)
+        encoded_labels = np.searchsorted(classes, train_labels).astype(int)
+        model = RandomForestModel(
+            input_size=scaled_train.shape[1],
+            output_size=len(classes),
+            n_trees=int(params.get("n_trees", 300)),
+            max_depth=params.get("max_depth"),
+            min_samples_split=int(params.get("min_samples_split", 2)),
+            seed=int(params.get("seed", SEED)),
+        )
+        model.fit(scaled_train, encoded_labels)
+        encoded_predictions = model.predict(scaled_eval)
+        predictions = classes[encoded_predictions]
+        return predictions.astype(int), model
 
     raise ValueError(f"fit_predict does not know the model '{name}' yet")

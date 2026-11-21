@@ -1,2 +1,0 @@
-task,model,best_parameters,accuracy,macro_f1,validation_samples,incorrect_predictions
-sentiment,k-NN,"{'k': 20, 'metric': 'cosine', 'weighted': True, 'scaling': 'standardize'}",0.5908333333333333,0.588598859121298,2400,982

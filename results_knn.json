@@ -1,0 +1,32 @@
+{
+  "image": {
+    "knn": {
+      "acc": 0.54725,
+      "params": {
+        "k": 1,
+        "metric": "cosine",
+        "weighted": false,
+        "scaling": "standardize"
+      }
+    }
+  },
+  "sentiment": {
+    "knn": {
+      "acc": 0.5979166666666667,
+      "params": {
+        "k": 100,
+        "metric": "euclidean",
+        "weighted": true,
+        "scaling": "none"
+      }
+    }
+  },
+  "environment": {
+    "python": "3.12.10",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "matplotlib": "3.11.2",
+    "seed": 123,
+    "train_val_split": "80% / 20%"
+  }
+}

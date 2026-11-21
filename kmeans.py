@@ -50,4 +50,3 @@ def cluster_purity(assignments, true_labels):
     for cluster in np.unique(assignments):
         correct += np.bincount(true_labels[assignments == cluster]).max()
     return correct / len(assignments)
-    

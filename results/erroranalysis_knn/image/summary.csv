@@ -1,2 +1,0 @@
-task,model,best_parameters,accuracy,macro_f1,validation_samples,incorrect_predictions
-image,k-NN,"{'k': 1, 'metric': 'cosine', 'weighted': False, 'scaling': 'sqrt_std'}",0.55625,0.5544658987255271,4000,1775

@@ -1,23 +1,9 @@
-"""
-The algorithm itself is implemented from scratch with NumPy only
-(no scikit-learn): an ensemble of Gini decision trees, each trained
-on a bootstrap sample (rows drawn with replacement), each split
-considering only a random subset of the attributes (sqrt of them by
-default). The prediction is the majority vote of all the trees.
-
-Train on a labeled CSV and predict labels for a test CSV:
-
-    python random_forest.py --train train.csv --test test.csv --output predictions.csv
-    python random_forest.py --train train.csv --test test.csv --output predictions.csv --n-trees 200 --seed 7
-
-CSV files may use named ``label`` and ``feature_*`` columns, or the older
-positional ``id,label,features...`` training layout.
-"""
-
 import argparse
 import csv
+import secrets
+from pathlib import Path
 
-import numpy as np 
+import numpy as np
 
 
 # ----------------------------------------------------------------------
@@ -181,8 +167,8 @@ class RandomForestModel:
             tree.fit(X[bootstrap], y[bootstrap])
             self.trees.append(tree)
 
-            if (t + 1) % 10 == 0:
-                print(f"Tree [{t + 1}/{self.n_trees}] trained")
+            if t == 0 or (t + 1) % 10 == 0 or t + 1 == self.n_trees:
+                print(f"Tree [{t + 1}/{self.n_trees}] trained", flush=True)
         return self
 
     def predict(self, X):
@@ -363,18 +349,47 @@ class RandomForestTesting:
 
 
 # ----------------------------------------------------------------------
-# Export (the example names a sample_submission.csv but never writes
-# it; this is the export it points at)
+# Export predictions in sample-submission order and format
 # ----------------------------------------------------------------------
 
-def export_predictions(testing_set, predictions, classes, submit_path):
+def export_predictions(predictions_by_id, submit_path, sample_submission_path=None):
+    header = ["id", "label"]
+    item_ids = list(predictions_by_id)
+    if sample_submission_path is not None:
+        with open(sample_submission_path, mode="r", newline="") as sample_file:
+            reader = csv.reader(sample_file)
+            sample_header = next(reader, None)
+            if sample_header != header:
+                raise ValueError(
+                    "Sample submission must have 'id,label' columns"
+                )
+            item_ids = [row[0] for row in reader if row]
+
+        if len(item_ids) != len(set(item_ids)):
+            raise ValueError("Sample submission contains duplicate IDs")
+        if set(item_ids) != set(predictions_by_id):
+            raise ValueError(
+                "Predicted IDs do not match the sample submission IDs "
+                f"({len(set(item_ids) - set(predictions_by_id))} missing, "
+                f"{len(set(predictions_by_id) - set(item_ids))} unexpected)"
+            )
+
     with open(submit_path, mode='w', newline='') as file:
         # lineterminator="\n" matches sample_submission.csv exactly:
         # Unix line endings, not the csv module's default \r\n.
         writer = csv.writer(file, lineterminator="\n")
-        writer.writerow(["id", "label"])
-        for item_id, pred in zip(testing_set.ids, predictions):
-            writer.writerow([item_id, classes[pred]])
+        writer.writerow(header)
+        for item_id in item_ids:
+            writer.writerow([item_id, predictions_by_id[item_id]])
+
+
+def _new_submission_path(output_dir):
+    while True:
+        submit_path = output_dir / (
+            f"submission{secrets.randbelow(1_000_000):06d}.csv"
+        )
+        if not submit_path.exists():
+            return submit_path
 
 
 # ----------------------------------------------------------------------
@@ -383,11 +398,16 @@ def export_predictions(testing_set, predictions, classes, submit_path):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
-        description="Random Forest (from scratch, NumPy) - layout follows main.py")
-    parser.add_argument("--train", default=None)
-    parser.add_argument("--test", default=None)
+        description=(
+            "Train both bundled datasets, or one custom training/testing pair."
+        )
+    )
+    parser.add_argument("--train", default=None,
+                        help="Custom training CSV (runs only with --test)")
+    parser.add_argument("--test", default=None,
+                        help="Custom testing CSV (runs only with --train)")
     parser.add_argument("--output", default=None)
-    parser.add_argument("--n-trees", type=int, default=100)
+    parser.add_argument("--n-trees", type=int, default=300)
     parser.add_argument("--max-depth", type=int, default=None,
                         help="Maximum depth per tree (default: no limit)")
     parser.add_argument("--seed", type=int, default=42)
@@ -396,136 +416,119 @@ def main(argv=None):
     if bool(args.train) != bool(args.test):
         parser.error("--train and --test must be provided together")
 
+    project_dir = Path(__file__).resolve().parent
+    # Also work with the same data/ directory used by run_all.py.
+    csv_dir = next(
+        (folder for folder in (project_dir / "data", project_dir / "CSVS", project_dir)
+         if (folder / "image_train.csv").is_file()),
+        project_dir / "data",
+    )
     if args.train and args.test:
-        training_path = args.train
-        testing_path = args.test
-        submit_path = args.output or "sample_submission.csv"
+        datasets = [("custom", args.train, args.test)]
+        sample_submission_path = None
     else:
-        # Same interaction and file paths as main.py: choose a dataset,
-        # 0 = image, 1 = sentiment.
-        print("Please enter the desired dataset: 0 for image, 1 for sentiment")
-        N = int(input("Enter the dataset number: "))
+        datasets = [
+            (
+                "image",
+                csv_dir / "image_train.csv",
+                csv_dir / "image_test.csv",
+            ),
+            (
+                "sentiment",
+                csv_dir / "sentiment_train.csv",
+                csv_dir / "sentiment_test.csv",
+            ),
+        ]
+        sample_submission_path = csv_dir / "sample_submission.csv"
 
-        training_paths = {
-            0: r"C:\Users\image_train.csv",
-            1: r"C:\Users\sentiment_train.csv",
-        }
-        testing_paths = {
-            0: r"C:\Users\image_test.csv",
-            1: r"C:\Users\sentiment_test.csv",
-        }
-        submit_path = args.output or r"C:\Users\sample_submission.csv"
-        training_path = training_paths[N]
-        testing_path = testing_paths[N]
+    # Custom CSV pairs may live outside the project and need a valid output folder.
+    output_dir = Path(args.test).resolve().parent if args.train else csv_dir
+    submit_path = args.output or _new_submission_path(output_dir)
+    predictions_by_id = {}
 
-    training_set = DataSet(training_path, has_label=True)
-    testing_set = DataSet(
-        testing_path,
-        has_label=_test_file_has_label(testing_path),
-        feature_encoders=training_set.feature_encoders,
-        feature_columns=training_set.feature_columns,
-    )
-
-    # Encode the diagnosis labels in the training and testing sets
-    # using the train set's unique diagnosis values (as in main.py)
-    classes = sorted(set(training_set.diagnosis))
-
-    label_to_index = {
-        label: index
-        for index, label in enumerate(classes)
-    }
-
-    training_set.encoded_diagnosis = [
-        label_to_index[label]
-        for label in training_set.diagnosis
-    ]
-
-    if testing_set.has_label:
-        try:
-            testing_set.encoded_diagnosis = [
-                label_to_index[label]
-                for label in testing_set.diagnosis
-            ]
-        except KeyError as e:
-            raise ValueError(
-                f"Unknown diagnosis in testing dataset: {e}"
-            )
-
-    print("\nTraining dataset loaded successfully.")
-    print("Testing dataset loaded successfully.")
-
-    # Random Forest configuration. The example hard-codes 30 input
-    # attributes; here it is taken from the data, which is 30 for the
-    # example's files and correct for any other count.
-    input_size = len(training_set.feature_columns)
-    if input_size == 0:
-        raise ValueError("Training CSV must contain at least one feature column")
-    output_size = len(classes)
-
-    # Create the Random Forest
-    model = RandomForestModel(
-        input_size,
-        output_size,
-        n_trees=args.n_trees,
-        max_depth=args.max_depth,
-        seed=args.seed,
-    )
-
-    print("\nRandom Forest created successfully.")
-
-    # Train the Random Forest
-    print("\nStarting Random Forest training...")
-
-    RandomForestTraining(
-        model,
-        training_set,
-    )
-
-    print("\nTraining completed successfully.")
-
-    # Test the Random Forest
-    test = RandomForestTesting(
-        model,
-        testing_set
-    )
-
-    # Export the predictions in the same submission format
-    export_predictions(testing_set, test.predictions, classes, submit_path)
-
-    print("\n================================")
-    print("RANDOM FOREST RESULTS")
-    print("================================")
-
-    print(
-        f"Training instances: {len(training_set.attributes)}"
-    )
-
-    print(
-        f"Testing instances: {len(testing_set.attributes)}"
-    )
-
-    print(
-        f"Number of input attributes: {input_size}"
-    )
-
-    print(
-        f"Number of trees: {model.n_trees}"
-    )
-
-    print(
-        f"Number of output classes: {output_size}"
-    )
-
-    if test.accuracy is not None:
-        print(
-            f"Random Forest Accuracy: {test.accuracy:.2f}%"
+    for dataset_name, training_path, testing_path in datasets:
+        print(f"\nLoading {dataset_name} dataset...")
+        training_set = DataSet(training_path, has_label=True)
+        testing_set = DataSet(
+            testing_path,
+            has_label=_test_file_has_label(testing_path),
+            feature_encoders=training_set.feature_encoders,
+            feature_columns=training_set.feature_columns,
         )
-    else:
-        print("Random Forest Accuracy: n/a (test file has no labels)")
 
-    print(
-        f"Predictions written to: {submit_path}"
+        classes = sorted(set(training_set.diagnosis))
+        label_to_index = {
+            label: index
+            for index, label in enumerate(classes)
+        }
+
+        training_set.encoded_diagnosis = [
+            label_to_index[label]
+            for label in training_set.diagnosis
+        ]
+
+        if testing_set.has_label:
+            try:
+                testing_set.encoded_diagnosis = [
+                    label_to_index[label]
+                    for label in testing_set.diagnosis
+                ]
+            except KeyError as e:
+                raise ValueError(
+                    f"Unknown diagnosis in {dataset_name} testing dataset: {e}"
+                ) from e
+
+        print(f"{dataset_name.capitalize()} dataset loaded successfully.")
+
+        input_size = len(training_set.feature_columns)
+        if input_size == 0:
+            raise ValueError(
+                f"{dataset_name.capitalize()} training CSV must contain "
+                "at least one feature column"
+            )
+        output_size = len(classes)
+
+        model = RandomForestModel(
+            input_size,
+            output_size,
+            n_trees=args.n_trees,
+            max_depth=args.max_depth,
+            seed=args.seed,
+        )
+
+        print(f"\nTraining {dataset_name} random forest...")
+        RandomForestTraining(model, training_set)
+        print(f"{dataset_name.capitalize()} training completed.")
+
+        test = RandomForestTesting(model, testing_set)
+        predicted_labels = [
+            classes[prediction]
+            for prediction in test.predictions
+        ]
+        for item_id, label in zip(testing_set.ids, predicted_labels):
+            if item_id in predictions_by_id:
+                raise ValueError(f"Duplicate test ID across datasets: {item_id}")
+            predictions_by_id[item_id] = label
+
+        print(f"\n{dataset_name.capitalize()} results")
+        print(f"Training instances: {len(training_set.attributes)}")
+        print(f"Testing instances: {len(testing_set.attributes)}")
+        print(f"Number of input attributes: {input_size}")
+        print(f"Number of trees: {model.n_trees}")
+        print(f"Number of output classes: {output_size}")
+
+        if test.accuracy is not None:
+            print(f"Random Forest Accuracy: {test.accuracy:.2f}%")
+        else:
+            print("Random Forest Accuracy: n/a (test file has no labels)")
+
+    export_predictions(
+        predictions_by_id,
+        submit_path,
+        sample_submission_path=sample_submission_path,
     )
+
+    print(f"\nCombined predictions written to: {submit_path}")
 
 
 if __name__ == "__main__":
