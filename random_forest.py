@@ -6,10 +6,7 @@ from pathlib import Path
 import numpy as np
 
 
-# ----------------------------------------------------------------------
 # One randomised decision tree (the building block of the forest)
-# ----------------------------------------------------------------------
-
 class DecisionTree:
     """A Gini decision tree that considers a random subset of
     attributes at each split - the 'random' part of a Random Forest."""
@@ -23,24 +20,25 @@ class DecisionTree:
         self.rng = rng if rng is not None else np.random.default_rng(0)
         self.tree_ = None
 
-    # -- impurity -------------------------------------------------------
     @staticmethod
     def _gini_from_counts(counts):
+        """Gini impurity from class counts: 0 when pure, higher the more mixed."""
         total = counts.sum()
         if total == 0:
             return 0.0
         p = counts / total
         return 1.0 - float(np.sum(p ** 2))
 
-    # -- best split ------------------------------------------------------
     def _best_split(self, X, y):
+        """Best (feature, threshold) among a random subset of features, or None if no split helps."""
         n_samples, n_features = X.shape
         parent_counts = np.bincount(y, minlength=self.n_classes).astype(float)
         parent_gini = self._gini_from_counts(parent_counts)
         if parent_gini == 0.0:
             return None
 
-        # Random subset of attributes for this node.
+        # Only a random subset of features is tried at each node; this is what
+        # makes the trees in the forest differ from each other.
         if self.max_features < n_features:
             features = self.rng.choice(n_features, size=self.max_features,
                                        replace=False)
@@ -52,8 +50,8 @@ class DecisionTree:
             order = np.argsort(X[:, feature])
             xs = X[order, feature]
             ys = y[order]
-            # Cumulative class counts as the threshold moves down the
-            # sorted values - every candidate split in one pass.
+            # Cumulative class counts as the threshold moves down the sorted
+            # values give the class counts of every candidate split in one pass.
             onehot = np.zeros((n_samples, self.n_classes))
             onehot[np.arange(n_samples), ys] = 1.0
             cumulative = np.cumsum(onehot, axis=0)
@@ -61,7 +59,7 @@ class DecisionTree:
             valid = np.where(xs[:-1] != xs[1:])[0]
             if len(valid) == 0:
                 continue
-            left_counts = cumulative[valid]
+            left_counts = cumulative[valid]  # left child = the first valid[i]+1 sorted rows
             right_counts = parent_counts - left_counts
             n_left = valid + 1.0
             n_right = n_samples - n_left
@@ -78,8 +76,8 @@ class DecisionTree:
                         "threshold": float((xs[i] + xs[i + 1]) / 2.0)}
         return best if best["feature"] is not None else None
 
-    # -- recursive build ---------------------------------------------------
     def _build(self, X, y, depth):
+        """Grow the tree recursively. Nodes are dicts; a node without "feature" is a leaf."""
         counts = np.bincount(y, minlength=self.n_classes)
         node = {"label": int(np.argmax(counts)), "n_samples": int(len(y))}
         if (
@@ -93,6 +91,7 @@ class DecisionTree:
             return node
         feature, threshold = split["feature"], split["threshold"]
         left = X[:, feature] <= threshold
+        # Safety net: a split that leaves one side empty would recurse forever
         if left.sum() == 0 or left.sum() == len(y):
             return node
         node.update({
@@ -109,6 +108,7 @@ class DecisionTree:
         return self
 
     def _predict_one(self, x):
+        """Follow the splits from the root down to a leaf and return its label."""
         node = self.tree_
         while "feature" in node:
             node = node["left"] if x[node["feature"]] <= node["threshold"] else node["right"]
@@ -119,10 +119,7 @@ class DecisionTree:
         return np.array([self._predict_one(x) for x in X], dtype=int)
 
 
-# ----------------------------------------------------------------------
-# The Random Forest model 
-# ----------------------------------------------------------------------
-
+# The Random Forest model
 class RandomForestModel:
     def __init__(self, input_size, output_size, n_trees=100,
                  max_depth=None, min_samples_split=2, seed=42):
@@ -132,7 +129,7 @@ class RandomForestModel:
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.seed = seed
-        # Standard classification choice: sqrt of the attributes.
+        # Standard choice for classification: try sqrt(number of features) per split
         self.max_features = max(1, int(np.sqrt(input_size)))
         self.trees = []
 
@@ -156,13 +153,14 @@ class RandomForestModel:
         self.trees = []
         rng = np.random.default_rng(self.seed)
         for t in range(self.n_trees):
+            # Bootstrap sample: draw len(X) rows with replacement, so each tree sees different data
             bootstrap = rng.integers(0, len(X), size=len(X))
             tree = DecisionTree(
                 n_classes=self.output_size,
                 max_features=self.max_features,
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
-                rng=np.random.default_rng(rng.integers(0, 2 ** 63 - 1)),
+                rng=np.random.default_rng(rng.integers(0, 2 ** 63 - 1)),  # each tree gets its own reproducible generator
             )
             tree.fit(X[bootstrap], y[bootstrap])
             self.trees.append(tree)
@@ -180,7 +178,7 @@ class RandomForestModel:
             raise ValueError(
                 f"Expected prediction features with {self.input_size} columns"
             )
-        all_preds = np.array([tree.predict(X) for tree in self.trees])
+        all_preds = np.array([tree.predict(X) for tree in self.trees])  # shape: (n_trees, n_rows)
         votes = np.zeros((X.shape[0], self.output_size), dtype=int)
         for j in range(X.shape[0]):
             votes[j] = np.bincount(all_preds[:, j],
@@ -188,10 +186,7 @@ class RandomForestModel:
         return np.argmax(votes, axis=1)
 
 
-# ----------------------------------------------------------------------
-# Dataset 
-# ----------------------------------------------------------------------
-
+# Dataset: reads a CSV and encodes its features
 class DataSet:
     LABEL_NAMES = ("label", "diagnosis", "class", "target", "y")
 
@@ -201,9 +196,9 @@ class DataSet:
         self.attributes = []
         self.diagnosis = []
         self.has_label = has_label
-        # feature_encoders: per attribute column, None if the column is
-        # numeric, otherwise a {value: code} dict learned from the
-        # training file, so the test file is encoded identically.
+        # feature_encoders: one entry per feature column. None means the column is
+        # numeric; otherwise a {value: code} dict learned from the training file,
+        # so the test file is encoded with exactly the same codes.
         self.feature_encoders = feature_encoders
 
         try:
@@ -240,7 +235,7 @@ class DataSet:
                         feature_indices = [
                             i for i in range(len(header)) if i not in excluded
                         ]
-                        # Preserve the older id,label,feature... CSV layout.
+                        # Older files use the layout id,label,feature...
                         if label_index == 1 and id_index is None:
                             feature_indices = list(range(2, len(header)))
                         self.feature_columns = [
@@ -296,6 +291,7 @@ class DataSet:
 
     @staticmethod
     def _make_encoder(values):
+        """None for a numeric column, otherwise a {text value: number} mapping."""
         try:
             [float(v) for v in values]
             return None  # numeric column, no encoding needed
@@ -304,6 +300,7 @@ class DataSet:
 
     @staticmethod
     def _encode_value(value, encoder):
+        """Convert one CSV cell to a float."""
         if encoder is None:
             return float(value)
         return encoder.get(value, -1.0)  # unseen category -> -1
@@ -318,26 +315,22 @@ def _test_file_has_label(test_path):
     )
 
 
-# ----------------------------------------------------------------------
-# Training 
-# ----------------------------------------------------------------------
-
+# Training
 class RandomForestTraining:
+    """Trains the model on a loaded training set."""
 
     def __init__(self, model, training_set):
         model.fit(training_set.attributes, training_set.encoded_diagnosis)
 
 
-# ----------------------------------------------------------------------
-# Testing 
-# ----------------------------------------------------------------------
-
+# Testing
 class RandomForestTesting:
+    """Predicts a test set and, when it has labels, the accuracy in percent."""
 
     def __init__(self, model, testing_set):
         x_test = np.array(testing_set.attributes, dtype=float)
 
-        # One prediction (a class index) per test instance
+        # One predicted class index per test row
         self.predictions = model.predict(x_test)
 
         self.accuracy = None
@@ -348,10 +341,7 @@ class RandomForestTesting:
             self.accuracy = (correct / count) * 100 if count > 0 else 0
 
 
-# ----------------------------------------------------------------------
 # Export predictions in sample-submission order and format
-# ----------------------------------------------------------------------
-
 def export_predictions(predictions_by_id, submit_path, sample_submission_path=None):
     header = ["id", "label"]
     item_ids = list(predictions_by_id)
@@ -375,8 +365,7 @@ def export_predictions(predictions_by_id, submit_path, sample_submission_path=No
             )
 
     with open(submit_path, mode='w', newline='') as file:
-        # lineterminator="\n" matches sample_submission.csv exactly:
-        # Unix line endings, not the csv module's default \r\n.
+        # Unix line endings, to match sample_submission.csv (the csv default is \r\n)
         writer = csv.writer(file, lineterminator="\n")
         writer.writerow(header)
         for item_id in item_ids:
@@ -384,6 +373,7 @@ def export_predictions(predictions_by_id, submit_path, sample_submission_path=No
 
 
 def _new_submission_path(output_dir):
+    """A random submissionNNNNNN.csv name that does not overwrite an existing file."""
     while True:
         submit_path = output_dir / (
             f"submission{secrets.randbelow(1_000_000):06d}.csv"
@@ -392,10 +382,7 @@ def _new_submission_path(output_dir):
             return submit_path
 
 
-# ----------------------------------------------------------------------
 # Main
-# ----------------------------------------------------------------------
-
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description=(
@@ -417,7 +404,7 @@ def main(argv=None):
         parser.error("--train and --test must be provided together")
 
     project_dir = Path(__file__).resolve().parent
-    # Also work with the same data/ directory used by run_all.py.
+    # Look for the CSVs in the same places run_all.py does (data/ or next to this file)
     csv_dir = next(
         (folder for folder in (project_dir / "data", project_dir / "CSVS", project_dir)
          if (folder / "image_train.csv").is_file()),
@@ -441,7 +428,7 @@ def main(argv=None):
         ]
         sample_submission_path = csv_dir / "sample_submission.csv"
 
-    # Custom CSV pairs may live outside the project and need a valid output folder.
+    # A custom CSV pair may live outside the project, so write next to its test file
     output_dir = Path(args.test).resolve().parent if args.train else csv_dir
     submit_path = args.output or _new_submission_path(output_dir)
     predictions_by_id = {}
@@ -456,6 +443,7 @@ def main(argv=None):
             feature_columns=training_set.feature_columns,
         )
 
+        # Labels are encoded as 0..n-1 for training and decoded again for the output
         classes = sorted(set(training_set.diagnosis))
         label_to_index = {
             label: index

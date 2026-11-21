@@ -1,0 +1,46 @@
+Starting experiments: knn, nn, dt, rf, kmeans
+Environment: {'python': '3.12.10', 'numpy': '2.5.4', 'pandas': '3.1.1', 'matplotlib': '3.11.2', 'torch': '2.15.0', 'scikit_learn': '1.9.1', 'seed': 123, 'train_val_split': '80% / 20%'}
+image     train (16000, 500)  validation (4000, 500)
+sentiment train (9600, 768)  validation (2400, 768)
+
+============ STARTING K-NN ============
+
+=== image ===
+none euclidean weighted=False: k=1: 0.525  k=3: 0.431  k=5: 0.409  k=10: 0.390  k=20: 0.355  k=50: 0.309  k=100: 0.275
+none euclidean weighted=True: k=1: 0.525  k=3: 0.520  k=5: 0.495  k=10: 0.447  k=20: 0.397  k=50: 0.339  k=100: 0.294
+none cosine weighted=False: k=1: 0.525  k=3: 0.432  k=5: 0.409  k=10: 0.390  k=20: 0.355  k=50: 0.309  k=100: 0.275
+none cosine weighted=True: k=1: 0.525  k=3: 0.520  k=5: 0.495  k=10: 0.447  k=20: 0.397  k=50: 0.339  k=100: 0.294
+standardize euclidean weighted=False: k=1: 0.432  k=3: 0.339  k=5: 0.312  k=10: 0.279  k=20: 0.238  k=50: 0.191  k=100: 0.166
+standardize euclidean weighted=True: k=1: 0.432  k=3: 0.405  k=5: 0.359  k=10: 0.304  k=20: 0.253  k=50: 0.202  k=100: 0.172
+standardize cosine weighted=False: k=1: 0.547  k=3: 0.421  k=5: 0.418  k=10: 0.408  k=20: 0.375  k=50: 0.331  k=100: 0.297
+standardize cosine weighted=True: k=1: 0.547  k=3: 0.534  k=5: 0.509  k=10: 0.463  k=20: 0.418  k=50: 0.358  k=100: 0.316
+Best k-NN: {'k': 1, 'metric': 'cosine', 'weighted': False, 'scaling': 'standardize'}
+Accuracy: 0.54725
+
+=== sentiment ===
+none euclidean weighted=False: k=1: 0.487  k=3: 0.522  k=5: 0.542  k=10: 0.562  k=20: 0.569  k=50: 0.591  k=100: 0.593
+none euclidean weighted=True: k=1: 0.487  k=3: 0.529  k=5: 0.548  k=10: 0.562  k=20: 0.572  k=50: 0.594  k=100: 0.598
+none cosine weighted=False: k=1: 0.487  k=3: 0.521  k=5: 0.544  k=10: 0.568  k=20: 0.581  k=50: 0.590  k=100: 0.592
+none cosine weighted=True: k=1: 0.487  k=3: 0.526  k=5: 0.545  k=10: 0.566  k=20: 0.582  k=50: 0.592  k=100: 0.593
+standardize euclidean weighted=False: k=1: 0.485  k=3: 0.515  k=5: 0.537  k=10: 0.552  k=20: 0.573  k=50: 0.593  k=100: 0.595
+standardize euclidean weighted=True: k=1: 0.485  k=3: 0.519  k=5: 0.546  k=10: 0.559  k=20: 0.580  k=50: 0.595  k=100: 0.597
+standardize cosine weighted=False: k=1: 0.509  k=3: 0.527  k=5: 0.557  k=10: 0.574  k=20: 0.579  k=50: 0.594  k=100: 0.592
+standardize cosine weighted=True: k=1: 0.509  k=3: 0.532  k=5: 0.554  k=10: 0.576  k=20: 0.579  k=50: 0.594  k=100: 0.592
+Best k-NN: {'k': 100, 'metric': 'euclidean', 'weighted': True, 'scaling': 'none'}
+Accuracy: 0.5979166666666667
+
+Saved results.json and results_knn.json
+COMPLETED k-NN in 15.1s
+
+============ STARTING NEURAL NETWORK ============
+
+===== NEURAL NETWORK: IMAGE (learning rate 0.01) =====
+Hyperparameters: {'hidden_size': 64, 'learning_rate': 0.01, 'epochs': 100, 'batch_size': 256, 'scaling': 'standardize'}
+
+--- Training Image Neural Network ---
+Epoch [1/100] - Loss: 3.2405 | Validation Accuracy: 26.48%
+Epoch [10/100] - Loss: 1.2139 | Validation Accuracy: 24.98%
+Epoch [20/100] - Loss: 0.8157 | Validation Accuracy: 24.90%
+Epoch [30/100] - Loss: 0.6078 | Validation Accuracy: 23.70%
+Epoch [40/100] - Loss: 0.5245 | Validation Accuracy: 23.62%
+Epoch [50/100] - Loss: 0.4452 | Validation Accuracy: 23.30%

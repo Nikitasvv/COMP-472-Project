@@ -26,6 +26,8 @@
     "numpy": "2.5.4",
     "pandas": "3.1.1",
     "matplotlib": "3.11.2",
+    "torch": "2.15.0",
+    "scikit_learn": "1.9.1",
     "seed": 123,
     "train_val_split": "80% / 20%"
   }

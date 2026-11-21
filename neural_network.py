@@ -1,15 +1,14 @@
-"""Neural network classifier (PyTorch) for image and sentiment datasets.
+"""Neural network classifier (PyTorch) for the image and sentiment datasets.
 
-This keeps the original full neural-network workflow:
-- 64-unit hidden layer with ReLU
-- Adam optimizer, cross-entropy loss, 100 epochs, and batches of 256
-- same 80/20 split and training-only standardizer as the k-NN code
-- printed epoch losses and validation accuracy
-- per-task test predictions and a Kaggle-formatted nn_submission.csv
+Network: one 64-unit hidden layer with ReLU, trained with Adam and cross-entropy
+loss for 100 epochs in batches of 256. Uses the same 80/20 split and the same
+training-only standardizer as the other models.
 
-It also exposes training helpers to test_nn.py and utils.fit_predict(), so the
-same network can participate in run_all.py, saved results, error analysis, and
-make_submission.py. Run this file directly for a neural-network-only submission.
+Run this file directly to train both tasks and write per-task prediction files
+plus a combined nn_submission.csv.
+
+The training helpers below are also used by test_neuralnetwork.py (validation
+runs for run_all.py) and by utils.fit_predict() (retraining for make_submission.py).
 """
 
 import random
@@ -25,19 +24,19 @@ from torch.utils.data import DataLoader, TensorDataset
 from utils import SEED, train_val_split, fit_standardizer
 
 
-# Use the Python file's location rather than the terminal's current directory.
+# Resolve paths from this file's location rather than the terminal's current directory
 PROJECT_DIR = Path(__file__).resolve().parent
 DATA_DIR = PROJECT_DIR / "data" if (PROJECT_DIR / "data").is_dir() else PROJECT_DIR
 
-# Hyperparameters (kept from the original network)
 HIDDEN_SIZE = 64
 LEARNING_RATE = 0.001
 EPOCHS = 100
 BATCH_SIZE = 256
 
 
-# One hidden layer with ReLU activation
 class NeuralNetworkModel(nn.Module):
+    """Input -> hidden layer (ReLU) -> one raw score (logit) per class."""
+
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
@@ -49,10 +48,10 @@ class NeuralNetworkModel(nn.Module):
         return self.fc2(x)
 
 
-# Read the features, labels and test IDs
-# This load_data(task) belongs to this standalone script. The shared
-# experiment_helpers.load_data() prepares both tasks for run_all.py.
+# This load_data(task) belongs to the standalone main() below. The shared
+# experiment_helpers.load_data() prepares both tasks for run_all.py instead.
 def load_data(task):
+    """Read the train and test CSVs of one task. Returns (X, y, X_test, test_ids)."""
     train = pd.read_csv(DATA_DIR / f"{task}_train.csv")
     test = pd.read_csv(DATA_DIR / f"{task}_test.csv")
 
@@ -67,19 +66,14 @@ def load_data(task):
     return X, y, X_test, test["id"]
 
 
-# Convert features and labels into mini-batches
-# Validation data are optional when training on ALL data for submission.
-def create_dataloaders(
-    X_train, y_train, X_val=None, y_val=None, batch_size=BATCH_SIZE
-):
+def create_dataloaders(X_train, y_train, X_val=None, y_val=None, batch_size=BATCH_SIZE):
+    """Wrap the arrays in mini-batch loaders. The validation set is optional because
+    the final submission model trains on all labelled rows and has nothing to validate on."""
     train_data = TensorDataset(
         torch.tensor(X_train, dtype=torch.float32),
         torch.tensor(y_train, dtype=torch.long),
     )
-
-    train_loader = DataLoader(
-        train_data, batch_size=batch_size, shuffle=True
-    )
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
 
     val_loader = None
     if X_val is not None and y_val is not None:
@@ -87,24 +81,21 @@ def create_dataloaders(
             torch.tensor(X_val, dtype=torch.float32),
             torch.tensor(y_val, dtype=torch.long),
         )
-        val_loader = DataLoader(
-            val_data, batch_size=batch_size, shuffle=False
-        )
+        val_loader = DataLoader(val_data, batch_size=batch_size, shuffle=False)
 
     return train_loader, val_loader
 
 
-# Evaluate the model using classification accuracy
-# Return percentage accuracy as in the original script.
 def evaluate(model, val_loader):
+    """Classification accuracy of the model, as a percentage."""
     if val_loader is None:
         raise ValueError("Validation loader is required for accuracy evaluation")
 
-    model.eval()
+    model.eval()  # switch off training-only behaviour
     correct = 0
     total = 0
 
-    with torch.no_grad():
+    with torch.no_grad():  # no gradients needed when only predicting
         for X, y in val_loader:
             predictions = model(X).argmax(dim=1)
             correct += (predictions == y).sum().item()
@@ -113,13 +104,12 @@ def evaluate(model, val_loader):
     return 100 * correct / total
 
 
-# Train using forward propagation and backpropagation
-# Optional keyword arguments allow experiment settings to be reused for
-# submission retraining; defaults stay exactly as in the original script.
 def train_and_evaluate(
     model, train_loader, val_loader, title,
     *, epochs=EPOCHS, learning_rate=LEARNING_RATE
 ):
+    """Train the model and print progress. Returns (model, final accuracy in %).
+    The accuracy is None when there is no validation loader."""
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -131,15 +121,16 @@ def train_and_evaluate(
 
         for X, y in train_loader:
             optimizer.zero_grad()
-            outputs = model(X)
+            outputs = model(X)                  # forward pass
             loss = criterion(outputs, y)
-            loss.backward()
-            optimizer.step()
+            loss.backward()                     # backpropagation
+            optimizer.step()                    # update the weights
 
-            total_loss += loss.item() * len(X)
+            total_loss += loss.item() * len(X)  # weight by batch size so the last, smaller batch is averaged correctly
 
         avg_loss = total_loss / len(train_loader.dataset)
 
+        # Print the first epoch, every 10th epoch and the last one
         if epoch == 0 or (epoch + 1) % 10 == 0 or epoch == epochs - 1:
             if val_loader is not None:
                 accuracy = evaluate(model, val_loader)
@@ -163,16 +154,15 @@ def train_and_evaluate(
             flush=True,
         )
     else:
-        accuracy = None  # Test labels are hidden; don't invent accuracy.
+        accuracy = None  # no labels to score against, so no accuracy is reported
         print(f"Finished training {title} on all labeled rows", flush=True)
 
     return model, accuracy
 
 
-# Predict the labels of the hidden test dataset
-# Predictions are computed in batches to avoid storing the full activation
-# matrix when evaluating large datasets.
 def predict(model, X_test, classes, batch_size=BATCH_SIZE):
+    """Predict original class labels. Works in batches so the activations of a
+    large dataset never have to be held in memory at once."""
     model.eval()
     predictions = []
 
@@ -183,6 +173,7 @@ def predict(model, X_test, classes, batch_size=BATCH_SIZE):
 
     if not predictions:
         return np.asarray([], dtype=np.asarray(classes).dtype)
+    # The network outputs class positions; look them up in `classes` to get the real labels
     return np.asarray(classes)[np.concatenate(predictions)]
 
 
@@ -194,16 +185,16 @@ def seed_everything():
 
 
 def encode_labels(y, classes):
-    """Map true label values to zero-based network output indices."""
+    """Map the real label values to 0-based positions, as the network's outputs expect."""
     label_to_index = {int(label): i for i, label in enumerate(classes)}
     return np.asarray([label_to_index[int(v)] for v in y], dtype=np.int64)
 
 
 def train_neural_network(params, train_features, train_labels, title="Neural Network"):
-    """Train PyTorch on ALL supplied training rows (no validation split).
+    """Train on ALL supplied rows (no validation split).
 
-    Called from utils.fit_predict() during final submission generation.
-    All preprocessing has already been fitted on the training rows by utils.
+    Called from utils.fit_predict() when retraining for the final submission.
+    The features have already been scaled by utils using the training rows.
     """
     seed_everything()
     classes = np.unique(train_labels)
@@ -225,24 +216,26 @@ def train_neural_network(params, train_features, train_labels, title="Neural Net
         model, train_loader, None, title,
         epochs=epochs, learning_rate=learning_rate,
     )
-    model.classes_ = classes  # needed to map neural-network outputs to labels
+    # Stored on the model so predict() can map outputs back to the real labels
+    model.classes_ = classes
     model.batch_size_ = batch_size
     return model
 
 
 def train_validation_network(params, X_train, y_train, X_val, y_val, title):
-    """Validate the SAME PyTorch network, using training-only standardization.
+    """Train on the training split and score on the validation split.
 
-    Called from test_nn.py so run_all.py can print epoch-level validation
-    scores and save predictions for the shared error-analysis files.
-    Returns predictions using the original class labels, plus accuracy (0-1).
+    Called from test_neuralnetwork.py so run_all.py can print epoch-level validation
+    scores and save predictions for error analysis.
+    Returns (model, accuracy between 0 and 1, validation predictions as original labels).
     """
     seed_everything()
+    # Scaling statistics come from the training rows only, so nothing leaks from validation
     standardize = fit_standardizer(X_train)
     X_train = standardize(X_train)
     X_val = standardize(X_val)
 
-    # Include validation labels in the output mapping, but never in training.
+    # Validation labels are included only to build the label mapping, never for training
     classes = np.unique(np.concatenate((y_train, y_val)))
     train_labels = encode_labels(y_train, classes)
     val_labels = encode_labels(y_val, classes)
@@ -268,7 +261,7 @@ def train_validation_network(params, X_train, y_train, X_val, y_val, title):
 
 
 def main():
-    """Run the original standalone neural network and write nn_submission.csv."""
+    """Standalone run: train and validate both tasks, then write nn_submission.csv."""
     seed_everything()
 
     all_predictions = []
@@ -276,8 +269,6 @@ def main():
 
     for task in ["image", "sentiment"]:
         X, y, X_test, test_ids = load_data(task)
-
-        # Same 80/20 split and standardizer as the k-NN code
         X_train, X_val, y_train, y_val = train_val_split(X, y)
 
         standardize = fit_standardizer(X_train)
@@ -285,13 +276,9 @@ def main():
         X_val = standardize(X_val)
         X_test = standardize(X_test)
 
-        # Encode original labels as class indices
         classes = np.unique(y)
-        label_to_index = {
-            label: i for i, label in enumerate(classes)
-        }
-        y_train = np.array([label_to_index[v] for v in y_train])
-        y_val = np.array([label_to_index[v] for v in y_val])
+        y_train = encode_labels(y_train, classes)
+        y_val = encode_labels(y_val, classes)
 
         train_loader, val_loader = create_dataloaders(
             X_train, y_train, X_val, y_val
@@ -320,12 +307,11 @@ def main():
         print(f"Saved {output_file.name}", flush=True)
         all_predictions.append(task_results)
 
-    # Combine both datasets using the required Kaggle ID order
+    # Combine both tasks in the row order of sample_submission.csv
     sample = pd.read_csv(DATA_DIR / "sample_submission.csv")
-
     predictions = pd.concat(all_predictions, ignore_index=True)
 
-    # Validate IDs before merging, to avoid a silent row mismatch.
+    # Check the ids before merging so a mismatch cannot silently drop or duplicate rows
     assert predictions["id"].is_unique
     assert set(predictions["id"]) == set(sample["id"])
 
@@ -355,7 +341,7 @@ def main():
     print(f"Image Accuracy: {results['image']:.2f}%", flush=True)
     print(f"Sentiment Accuracy: {results['sentiment']:.2f}%", flush=True)
     print(f"Average Accuracy: {np.mean(list(results.values())):.2f}%", flush=True)
-    print("Saved Kaggle predictions to nn_submission.csv", flush=True)
+    print("Saved predictions to nn_submission.csv", flush=True)
 
 
 if __name__ == "__main__":

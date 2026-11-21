@@ -6,7 +6,7 @@ import time
 import numpy as np
 
 from experiment_helpers import setup, load_data
-import matplotlib.pyplot as plt  # after experiment_helpers, which switches matplotlib to file output
+import matplotlib.pyplot as plt  # imported after experiment_helpers, which switches matplotlib to file output
 from kmeans import fit_kmeans, calculate_inertia, cluster_purity
 from utils import SEED
 
@@ -16,14 +16,13 @@ CLASS_NAMES = ["Negative", "Neutral", "Positive"]
 
 def run_kmeans(data):
     features = data["sentiment"]["train_features"]
-    true_labels = data["sentiment"][
-        "train_labels"
-    ]  # never given to k-Means, only used to score it
+    # The true labels are never given to k-Means, they are only used to score the clusters
+    true_labels = data["sentiment"]["train_labels"]
     print("\n++++ Clustering: k-Means on the sentiment data ++++")
     print(f"{len(features)} points, {features.shape[1]} features")
 
     results = []
-    k3_assignments = None  # k=3 clusters, compared with the true labels at the end
+    k3_assignments = None  # kept for the cluster-vs-class table at the end
 
     for k in K_VALUES:
         centers, assignments = fit_kmeans(features, k=k, seed=SEED)
@@ -33,7 +32,6 @@ def run_kmeans(data):
         if k == 3:
             k3_assignments = assignments
 
-    # Save the results
     with open("kmeans_results.csv", "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(["k", "Inertia", "Purity"])
@@ -41,7 +39,6 @@ def run_kmeans(data):
             writer.writerow([k, f"{inertia:.2f}", f"{purity:.4f}"])
     print("Saved kmeans_results.csv")
 
-    # Print a summary table
     print(f"\n{'k':>3} {'inertia':>14} {'purity':>8}")
     for k, inertia, purity in results:
         print(f"{k:>3} {inertia:14.1f} {purity:8.3f}")
@@ -49,6 +46,7 @@ def run_kmeans(data):
         "Note: purity tends to rise when k rises, so the highest purity is not automatically the best k."
     )
 
+    # Elbow plot: the k where inertia stops dropping quickly is a reasonable choice
     plt.figure(figsize=(6, 4))
     plt.plot(K_VALUES, [r[1] for r in results], marker="o")
     plt.xlabel("number of clusters k")
@@ -60,7 +58,7 @@ def run_kmeans(data):
     plt.close()
     print("Saved figures/kmeans_inertia.png")
 
-    # For k=3: how many samples of each true class ended up in each cluster
+    # With k=3 the clusters could in theory match the 3 sentiment classes; count how well they do
     print("\nk=3: clusters (rows) vs true sentiment (columns)")
     print(f"{'':>10}" + "".join(f"{name:>10}" for name in CLASS_NAMES))
     for cluster in range(3):
