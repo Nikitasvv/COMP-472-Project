@@ -11,8 +11,9 @@ class DecisionTree:
     """A Gini decision tree that considers a random subset of
     attributes at each split - the 'random' part of a Random Forest."""
 
-    def __init__(self, n_classes, max_features, max_depth=None,
-                 min_samples_split=2, rng=None):
+    def __init__(
+        self, n_classes, max_features, max_depth=None, min_samples_split=2, rng=None
+    ):
         self.n_classes = n_classes
         self.max_features = max_features
         self.max_depth = max_depth
@@ -27,7 +28,7 @@ class DecisionTree:
         if total == 0:
             return 0.0
         p = counts / total
-        return 1.0 - float(np.sum(p ** 2))
+        return 1.0 - float(np.sum(p**2))
 
     def _best_split(self, X, y):
         """Best (feature, threshold) among a random subset of features, or None if no split helps."""
@@ -40,8 +41,9 @@ class DecisionTree:
         # Only a random subset of features is tried at each node; this is what
         # makes the trees in the forest differ from each other.
         if self.max_features < n_features:
-            features = self.rng.choice(n_features, size=self.max_features,
-                                       replace=False)
+            features = self.rng.choice(
+                n_features, size=self.max_features, replace=False
+            )
         else:
             features = np.arange(n_features)
 
@@ -59,21 +61,26 @@ class DecisionTree:
             valid = np.where(xs[:-1] != xs[1:])[0]
             if len(valid) == 0:
                 continue
-            left_counts = cumulative[valid]  # left child = the first valid[i]+1 sorted rows
+            left_counts = cumulative[
+                valid
+            ]  # left child = the first valid[i]+1 sorted rows
             right_counts = parent_counts - left_counts
             n_left = valid + 1.0
             n_right = n_samples - n_left
             p_left = left_counts / n_left[:, None]
             p_right = right_counts / n_right[:, None]
-            gini_left = 1.0 - np.sum(p_left ** 2, axis=1)
-            gini_right = 1.0 - np.sum(p_right ** 2, axis=1)
+            gini_left = 1.0 - np.sum(p_left**2, axis=1)
+            gini_right = 1.0 - np.sum(p_right**2, axis=1)
             weighted = (n_left * gini_left + n_right * gini_right) / n_samples
             gains = parent_gini - weighted
             k = int(np.argmax(gains))
             if gains[k] > best["gain"]:
                 i = valid[k]
-                best = {"gain": float(gains[k]), "feature": int(feature),
-                        "threshold": float((xs[i] + xs[i + 1]) / 2.0)}
+                best = {
+                    "gain": float(gains[k]),
+                    "feature": int(feature),
+                    "threshold": float((xs[i] + xs[i + 1]) / 2.0),
+                }
         return best if best["feature"] is not None else None
 
     def _build(self, X, y, depth):
@@ -94,24 +101,31 @@ class DecisionTree:
         # Safety net: a split that leaves one side empty would recurse forever
         if left.sum() == 0 or left.sum() == len(y):
             return node
-        node.update({
-            "feature": feature,
-            "threshold": threshold,
-            "left": self._build(X[left], y[left], depth + 1),
-            "right": self._build(X[~left], y[~left], depth + 1),
-        })
+        node.update(
+            {
+                "feature": feature,
+                "threshold": threshold,
+                "left": self._build(X[left], y[left], depth + 1),
+                "right": self._build(X[~left], y[~left], depth + 1),
+            }
+        )
         return node
 
     def fit(self, X, y):
-        self.tree_ = self._build(np.asarray(X, dtype=float),
-                                 np.asarray(y, dtype=int), depth=0)
+        self.tree_ = self._build(
+            np.asarray(X, dtype=float), np.asarray(y, dtype=int), depth=0
+        )
         return self
 
     def _predict_one(self, x):
         """Follow the splits from the root down to a leaf and return its label."""
         node = self.tree_
         while "feature" in node:
-            node = node["left"] if x[node["feature"]] <= node["threshold"] else node["right"]
+            node = (
+                node["left"]
+                if x[node["feature"]] <= node["threshold"]
+                else node["right"]
+            )
         return node["label"]
 
     def predict(self, X):
@@ -121,8 +135,15 @@ class DecisionTree:
 
 # The Random Forest model
 class RandomForestModel:
-    def __init__(self, input_size, output_size, n_trees=100,
-                 max_depth=None, min_samples_split=2, seed=42):
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        n_trees=100,
+        max_depth=None,
+        min_samples_split=2,
+        seed=42,
+    ):
         self.input_size = input_size
         self.output_size = output_size
         self.n_trees = n_trees
@@ -160,7 +181,9 @@ class RandomForestModel:
                 max_features=self.max_features,
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
-                rng=np.random.default_rng(rng.integers(0, 2 ** 63 - 1)),  # each tree gets its own reproducible generator
+                rng=np.random.default_rng(
+                    rng.integers(0, 2**63 - 1)
+                ),  # each tree gets its own reproducible generator
             )
             tree.fit(X[bootstrap], y[bootstrap])
             self.trees.append(tree)
@@ -178,11 +201,12 @@ class RandomForestModel:
             raise ValueError(
                 f"Expected prediction features with {self.input_size} columns"
             )
-        all_preds = np.array([tree.predict(X) for tree in self.trees])  # shape: (n_trees, n_rows)
+        all_preds = np.array(
+            [tree.predict(X) for tree in self.trees]
+        )  # shape: (n_trees, n_rows)
         votes = np.zeros((X.shape[0], self.output_size), dtype=int)
         for j in range(X.shape[0]):
-            votes[j] = np.bincount(all_preds[:, j],
-                                   minlength=self.output_size)
+            votes[j] = np.bincount(all_preds[:, j], minlength=self.output_size)
         return np.argmax(votes, axis=1)
 
 
@@ -190,8 +214,9 @@ class RandomForestModel:
 class DataSet:
     LABEL_NAMES = ("label", "diagnosis", "class", "target", "y")
 
-    def __init__(self, data_path, has_label=True, feature_encoders=None,
-                 feature_columns=None):
+    def __init__(
+        self, data_path, has_label=True, feature_encoders=None, feature_columns=None
+    ):
         self.ids = []
         self.attributes = []
         self.diagnosis = []
@@ -202,7 +227,7 @@ class DataSet:
         self.feature_encoders = feature_encoders
 
         try:
-            with open(data_path, mode='r', newline='') as file:
+            with open(data_path, mode="r", newline="") as file:
                 reader = csv.reader(file)
                 header = next(reader, None)
                 if not header:
@@ -210,8 +235,11 @@ class DataSet:
 
                 normalized = [name.strip().lower() for name in header]
                 label_index = next(
-                    (i for i, name in enumerate(normalized)
-                     if name in self.LABEL_NAMES),
+                    (
+                        i
+                        for i, name in enumerate(normalized)
+                        if name in self.LABEL_NAMES
+                    ),
                     None,
                 )
                 if has_label and label_index is None:
@@ -219,17 +247,18 @@ class DataSet:
 
                 if feature_columns is None:
                     named_features = [
-                        i for i, name in enumerate(normalized)
+                        i
+                        for i, name in enumerate(normalized)
                         if name.startswith("feature_")
                     ]
                     if named_features:
                         feature_indices = named_features
-                        self.feature_columns = [
-                            header[i] for i in feature_indices
-                        ]
+                        self.feature_columns = [header[i] for i in feature_indices]
                     else:
                         excluded = {label_index} if label_index is not None else set()
-                        id_index = normalized.index("id") if "id" in normalized else None
+                        id_index = (
+                            normalized.index("id") if "id" in normalized else None
+                        )
                         if id_index is not None:
                             excluded.add(id_index)
                         feature_indices = [
@@ -238,9 +267,7 @@ class DataSet:
                         # Older files use the layout id,label,feature...
                         if label_index == 1 and id_index is None:
                             feature_indices = list(range(2, len(header)))
-                        self.feature_columns = [
-                            header[i] for i in feature_indices
-                        ]
+                        self.feature_columns = [header[i] for i in feature_indices]
                 else:
                     self.feature_columns = list(feature_columns)
                     feature_indices = []
@@ -274,20 +301,22 @@ class DataSet:
                     raise ValueError("Training and testing feature counts differ")
 
                 for row_number, (row, raw_attrs) in enumerate(zip(rows, raw)):
-                    self.ids.append(row[id_index] if id_index is not None else str(row_number))
-                    self.attributes.append([
-                        self._encode_value(v, self.feature_encoders[j])
-                        for j, v in enumerate(raw_attrs)
-                    ])
+                    self.ids.append(
+                        row[id_index] if id_index is not None else str(row_number)
+                    )
+                    self.attributes.append(
+                        [
+                            self._encode_value(v, self.feature_encoders[j])
+                            for j, v in enumerate(raw_attrs)
+                        ]
+                    )
                     if has_label:
                         if label_index is None or label_index >= len(row):
                             raise ValueError("CSV row is missing its label")
                         self.diagnosis.append(row[label_index])
 
         except (OSError, ValueError, IndexError) as e:
-            raise RuntimeError(
-                f"Error reading the dataset {data_path}"
-            ) from e
+            raise RuntimeError(f"Error reading the dataset {data_path}") from e
 
     @staticmethod
     def _make_encoder(values):
@@ -308,7 +337,7 @@ class DataSet:
 
 def _test_file_has_label(test_path):
     """Detect labels by header name so unlabeled test CSVs are supported."""
-    with open(test_path, mode='r', newline='') as file:
+    with open(test_path, mode="r", newline="") as file:
         header = next(csv.reader(file), None)
     return bool(header) and any(
         name.strip().lower() in DataSet.LABEL_NAMES for name in header
@@ -350,9 +379,7 @@ def export_predictions(predictions_by_id, submit_path, sample_submission_path=No
             reader = csv.reader(sample_file)
             sample_header = next(reader, None)
             if sample_header != header:
-                raise ValueError(
-                    "Sample submission must have 'id,label' columns"
-                )
+                raise ValueError("Sample submission must have 'id,label' columns")
             item_ids = [row[0] for row in reader if row]
 
         if len(item_ids) != len(set(item_ids)):
@@ -364,7 +391,7 @@ def export_predictions(predictions_by_id, submit_path, sample_submission_path=No
                 f"{len(set(predictions_by_id) - set(item_ids))} unexpected)"
             )
 
-    with open(submit_path, mode='w', newline='') as file:
+    with open(submit_path, mode="w", newline="") as file:
         # Unix line endings, to match sample_submission.csv (the csv default is \r\n)
         writer = csv.writer(file, lineterminator="\n")
         writer.writerow(header)
@@ -375,9 +402,7 @@ def export_predictions(predictions_by_id, submit_path, sample_submission_path=No
 def _new_submission_path(output_dir):
     """A random submissionNNNNNN.csv name that does not overwrite an existing file."""
     while True:
-        submit_path = output_dir / (
-            f"submission{secrets.randbelow(1_000_000):06d}.csv"
-        )
+        submit_path = output_dir / (f"submission{secrets.randbelow(1_000_000):06d}.csv")
         if not submit_path.exists():
             return submit_path
 
@@ -389,14 +414,20 @@ def main(argv=None):
             "Train both bundled datasets, or one custom training/testing pair."
         )
     )
-    parser.add_argument("--train", default=None,
-                        help="Custom training CSV (runs only with --test)")
-    parser.add_argument("--test", default=None,
-                        help="Custom testing CSV (runs only with --train)")
+    parser.add_argument(
+        "--train", default=None, help="Custom training CSV (runs only with --test)"
+    )
+    parser.add_argument(
+        "--test", default=None, help="Custom testing CSV (runs only with --train)"
+    )
     parser.add_argument("--output", default=None)
     parser.add_argument("--n-trees", type=int, default=300)
-    parser.add_argument("--max-depth", type=int, default=None,
-                        help="Maximum depth per tree (default: no limit)")
+    parser.add_argument(
+        "--max-depth",
+        type=int,
+        default=None,
+        help="Maximum depth per tree (default: no limit)",
+    )
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args(argv)
 
@@ -406,8 +437,11 @@ def main(argv=None):
     project_dir = Path(__file__).resolve().parent
     # Look for the CSVs in the same places run_all.py does (data/ or next to this file)
     csv_dir = next(
-        (folder for folder in (project_dir / "data", project_dir / "CSVS", project_dir)
-         if (folder / "image_train.csv").is_file()),
+        (
+            folder
+            for folder in (project_dir / "data", project_dir / "CSVS", project_dir)
+            if (folder / "image_train.csv").is_file()
+        ),
         project_dir / "data",
     )
     if args.train and args.test:
@@ -445,21 +479,16 @@ def main(argv=None):
 
         # Labels are encoded as 0..n-1 for training and decoded again for the output
         classes = sorted(set(training_set.diagnosis))
-        label_to_index = {
-            label: index
-            for index, label in enumerate(classes)
-        }
+        label_to_index = {label: index for index, label in enumerate(classes)}
 
         training_set.encoded_diagnosis = [
-            label_to_index[label]
-            for label in training_set.diagnosis
+            label_to_index[label] for label in training_set.diagnosis
         ]
 
         if testing_set.has_label:
             try:
                 testing_set.encoded_diagnosis = [
-                    label_to_index[label]
-                    for label in testing_set.diagnosis
+                    label_to_index[label] for label in testing_set.diagnosis
                 ]
             except KeyError as e:
                 raise ValueError(
@@ -489,10 +518,7 @@ def main(argv=None):
         print(f"{dataset_name.capitalize()} training completed.")
 
         test = RandomForestTesting(model, testing_set)
-        predicted_labels = [
-            classes[prediction]
-            for prediction in test.predictions
-        ]
+        predicted_labels = [classes[prediction] for prediction in test.predictions]
         for item_id, label in zip(testing_set.ids, predicted_labels):
             if item_id in predictions_by_id:
                 raise ValueError(f"Duplicate test ID across datasets: {item_id}")

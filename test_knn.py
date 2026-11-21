@@ -30,7 +30,9 @@ def run_knn(data, state):
     """Test every setting on both datasets and keep the most accurate one of each."""
     best = state["best"]
     clear_model_results(state, "knn")
-    curves = {}  # (task, scaling, metric, weighted) -> accuracy for each k, used for the graph
+    curves = (
+        {}
+    )  # (task, scaling, metric, weighted) -> accuracy for each k, used for the graph
 
     for task in TASKS:
         dataset = data[task]

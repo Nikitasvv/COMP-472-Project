@@ -8,26 +8,38 @@ One forest with the largest tree count is trained per task. Its first 10, 50, ..
 are exactly the forest you would get by training that many trees with the same seed,
 so every smaller forest is scored without retraining.
 """
+
 import argparse
 import time
 
 import numpy as np
 
 from experiment_helpers import (
-    TASKS, PROJECT_DIR, setup, load_data, load_state, save_state, clear_model_results, record,
+    TASKS,
+    PROJECT_DIR,
+    setup,
+    load_data,
+    load_state,
+    save_state,
+    clear_model_results,
+    record,
 )
 import matplotlib.pyplot as plt  # imported after experiment_helpers, which switches matplotlib to file output
 from utils import SEED, accuracy, fit_predict, prep
 
 RF_PARAMS = {
-    "n_trees": 100,       # size of the largest forest that is trained
-    "max_depth": None,    # None = grow until the leaves are pure
+    "n_trees": 100,  # size of the largest forest that is trained
+    "max_depth": None,  # None = grow until the leaves are pure
     "min_samples_split": 2,
     "seed": SEED,
-    "scaling": "none",    # tree splits do not depend on feature scale
+    "scaling": "none",  # tree splits do not depend on feature scale
 }
 
-RF_TREE_COUNTS = (10, 50, 100)  # forest sizes that are scored (the largest is always included)
+RF_TREE_COUNTS = (
+    10,
+    50,
+    100,
+)  # forest sizes that are scored (the largest is always included)
 
 
 def run_rf(data, state, params=None):
@@ -46,9 +58,12 @@ def run_rf(data, state, params=None):
         print(f"\n--- {task.upper()} Random Forest ---", flush=True)
         start = time.perf_counter()
         _, model = fit_predict(
-            "rf", params,
-            dataset["train_features"], dataset["train_labels"],
-            dataset["val_features"], dataset["n_classes"],
+            "rf",
+            params,
+            dataset["train_features"],
+            dataset["train_labels"],
+            dataset["val_features"],
+            dataset["n_classes"],
         )
         print(f"Forest trained in {time.perf_counter() - start:.1f}s", flush=True)
 
@@ -64,23 +79,38 @@ def run_rf(data, state, params=None):
             if t in counts:
                 val_pred = classes[votes.argmax(axis=1)]
                 val_acc = accuracy(dataset["val_labels"], val_pred)
-                record(state["best"], task, "rf", {**params, "n_trees": t}, val_acc, val_pred)
+                record(
+                    state["best"],
+                    task,
+                    "rf",
+                    {**params, "n_trees": t},
+                    val_acc,
+                    val_pred,
+                )
                 scores.append(val_acc)
-                print(f"Random Forest {task} with {t:>3} trees: "
-                      f"validation accuracy {val_acc * 100:.2f}%", flush=True)
+                print(
+                    f"Random Forest {task} with {t:>3} trees: "
+                    f"validation accuracy {val_acc * 100:.2f}%",
+                    flush=True,
+                )
         curves[task] = scores
 
         # The forest is meant to beat a single tree, so show the best tree next to it
         dt = state["best"][task].get("dt")
         if dt is not None:
-            print(f"Best single decision tree ({task}): {dt['acc'] * 100:.2f}%", flush=True)
+            print(
+                f"Best single decision tree ({task}): {dt['acc'] * 100:.2f}%",
+                flush=True,
+            )
 
     fig, graphs = plt.subplots(1, 2, figsize=(10, 3.5))
     for graph, task in zip(graphs, TASKS):
         graph.plot(counts, curves[task], marker="o", label="random forest")
         dt = state["best"][task].get("dt")
         if dt is not None:
-            graph.axhline(dt["acc"], linestyle="--", color="gray", label="best decision tree")
+            graph.axhline(
+                dt["acc"], linestyle="--", color="gray", label="best decision tree"
+            )
         graph.set_title(f"Random forest: {task}")
         graph.set_xlabel("number of trees")
         graph.set_ylabel("validation accuracy")
@@ -89,25 +119,34 @@ def run_rf(data, state, params=None):
     plt.savefig(PROJECT_DIR / "figures" / "rf_trees.png", dpi=120)
     plt.close()
     print("Saved figures/rf_trees.png", flush=True)
-    print("Random Forest results will be saved to results.json and experiment_state.pkl", flush=True)
+    print(
+        "Random Forest results will be saved to results.json and experiment_state.pkl",
+        flush=True,
+    )
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--n-trees", type=int, default=RF_PARAMS["n_trees"])
     parser.add_argument("--max-depth", type=int, default=RF_PARAMS["max_depth"])
-    parser.add_argument("--min-samples-split", type=int, default=RF_PARAMS["min_samples_split"])
+    parser.add_argument(
+        "--min-samples-split", type=int, default=RF_PARAMS["min_samples_split"]
+    )
     parser.add_argument("--seed", type=int, default=RF_PARAMS["seed"])
     args = parser.parse_args(argv)
     setup()
     data = load_data()
     state = load_state()  # keep results of the other models that were already trained
-    run_rf(data, state, {
-        "n_trees": args.n_trees,
-        "max_depth": args.max_depth,
-        "min_samples_split": args.min_samples_split,
-        "seed": args.seed,
-    })
+    run_rf(
+        data,
+        state,
+        {
+            "n_trees": args.n_trees,
+            "max_depth": args.max_depth,
+            "min_samples_split": args.min_samples_split,
+            "seed": args.seed,
+        },
+    )
     save_state(state)
 
 

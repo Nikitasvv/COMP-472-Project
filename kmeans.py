@@ -24,7 +24,9 @@ def fit_kmeans(features, k=3, max_iter=100, seed=123):
         assignments = assign_clusters(features, centers)
 
         # Converged: no point changed cluster since the last iteration
-        if previous_assignments is not None and np.array_equal(assignments, previous_assignments):
+        if previous_assignments is not None and np.array_equal(
+            assignments, previous_assignments
+        ):
             break
 
         # Move each center to the mean of its points (an empty cluster keeps its old center)

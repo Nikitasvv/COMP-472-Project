@@ -8,6 +8,36 @@
         "weighted": false,
         "scaling": "standardize"
       }
+    },
+    "nn": {
+      "acc": 0.29725,
+      "params": {
+        "hidden_size": 64,
+        "learning_rate": 0.0001,
+        "epochs": 100,
+        "batch_size": 256,
+        "scaling": "standardize"
+      }
+    },
+    "dt": {
+      "acc": 0.119,
+      "params": {
+        "max_depth": null,
+        "min_samples_split": 2,
+        "max_features": null,
+        "seed": 123,
+        "scaling": "none"
+      }
+    },
+    "rf": {
+      "acc": 0.29775,
+      "params": {
+        "n_trees": 100,
+        "max_depth": null,
+        "min_samples_split": 2,
+        "seed": 123,
+        "scaling": "none"
+      }
     }
   },
   "sentiment": {
@@ -17,6 +47,36 @@
         "k": 100,
         "metric": "euclidean",
         "weighted": true,
+        "scaling": "none"
+      }
+    },
+    "nn": {
+      "acc": 0.6508333333333333,
+      "params": {
+        "hidden_size": 64,
+        "learning_rate": 0.0001,
+        "epochs": 100,
+        "batch_size": 256,
+        "scaling": "standardize"
+      }
+    },
+    "dt": {
+      "acc": 0.4995833333333333,
+      "params": {
+        "max_depth": 5,
+        "min_samples_split": 2,
+        "max_features": null,
+        "seed": 123,
+        "scaling": "none"
+      }
+    },
+    "rf": {
+      "acc": 0.6029166666666667,
+      "params": {
+        "n_trees": 100,
+        "max_depth": null,
+        "min_samples_split": 2,
+        "seed": 123,
         "scaling": "none"
       }
     }

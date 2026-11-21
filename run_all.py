@@ -8,6 +8,7 @@ Just decision tree:    python -u run_all.py --only dt --dt-max-depth 12
 Just random forest:    python -u run_all.py --only rf --rf-n-trees 10
 Results are printed immediately and also written to run_all_output.txt.
 """
+
 import argparse
 import contextlib
 import os
@@ -16,7 +17,14 @@ import sys
 import time
 
 from experiment_helpers import (
-    TASKS, MODEL_NAMES, PROJECT_DIR, setup, load_data, load_state, new_state, save_state,
+    TASKS,
+    MODEL_NAMES,
+    PROJECT_DIR,
+    setup,
+    load_data,
+    load_state,
+    new_state,
+    save_state,
 )
 from test_knn import run_knn
 from test_neuralnetwork import run_nn, NN_PARAMS, NN_LEARNING_RATES
@@ -31,6 +39,7 @@ RUN_ORDER = ("knn", "nn", "dt", "rf", "kmeans")
 
 class Tee:
     """File-like object that sends everything printed to several streams (terminal and log file)."""
+
     def __init__(self, *streams):
         self.streams = streams
 
@@ -59,21 +68,47 @@ def print_results_table(best):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--only", nargs="+", choices=RUN_ORDER,
+        "--only",
+        nargs="+",
+        choices=RUN_ORDER,
         help="Run only the selected models (example: --only nn).",
     )
-    parser.add_argument("--nn-epochs", type=int, default=NN_PARAMS["epochs"],
-                        help="Override epochs for testing (default: 100).")
-    parser.add_argument("--nn-lr", type=float, default=None,
-                        help=f"Train with only this learning rate (default: sweep {NN_LEARNING_RATES}).")
-    parser.add_argument("--dt-max-depth", type=int, default=None,
-                        help=f"Test only this tree depth (default: sweep {DT_DEPTHS}).")
-    parser.add_argument("--dt-min-samples-split", type=int, default=DT_PARAMS["min_samples_split"])
-    parser.add_argument("--rf-n-trees", type=int, default=RF_PARAMS["n_trees"],
-                        help="Size of the largest forest; smaller sizes (10, 50, ...) are scored too (default: 100).")
-    parser.add_argument("--rf-max-depth", type=int, default=RF_PARAMS["max_depth"],
-                        help="Cap forest tree depth for faster experiments.")
-    parser.add_argument("--rf-min-samples-split", type=int, default=RF_PARAMS["min_samples_split"])
+    parser.add_argument(
+        "--nn-epochs",
+        type=int,
+        default=NN_PARAMS["epochs"],
+        help="Override epochs for testing (default: 100).",
+    )
+    parser.add_argument(
+        "--nn-lr",
+        type=float,
+        default=None,
+        help=f"Train with only this learning rate (default: sweep {NN_LEARNING_RATES}).",
+    )
+    parser.add_argument(
+        "--dt-max-depth",
+        type=int,
+        default=None,
+        help=f"Test only this tree depth (default: sweep {DT_DEPTHS}).",
+    )
+    parser.add_argument(
+        "--dt-min-samples-split", type=int, default=DT_PARAMS["min_samples_split"]
+    )
+    parser.add_argument(
+        "--rf-n-trees",
+        type=int,
+        default=RF_PARAMS["n_trees"],
+        help="Size of the largest forest; smaller sizes (10, 50, ...) are scored too (default: 100).",
+    )
+    parser.add_argument(
+        "--rf-max-depth",
+        type=int,
+        default=RF_PARAMS["max_depth"],
+        help="Cap forest tree depth for faster experiments.",
+    )
+    parser.add_argument(
+        "--rf-min-samples-split", type=int, default=RF_PARAMS["min_samples_split"]
+    )
     args = parser.parse_args(argv)
     if args.rf_n_trees < 1 or args.nn_epochs < 1:
         parser.error("--rf-n-trees and --nn-epochs must be positive")
@@ -95,7 +130,11 @@ def main(argv=None):
             program_start = time.perf_counter()
             durations = {}
             try:
-                print("Starting experiments:", ", ".join(k for k in RUN_ORDER if k in selections), flush=True)
+                print(
+                    "Starting experiments:",
+                    ", ".join(k for k in RUN_ORDER if k in selections),
+                    flush=True,
+                )
                 setup()
                 step_start = time.perf_counter()
                 data = load_data()
@@ -112,30 +151,52 @@ def main(argv=None):
                 ]:
                     if model_key not in selections:
                         continue
-                    print(f"\n{'=' * 12} STARTING {label.upper()} {'=' * 12}", flush=True)
+                    print(
+                        f"\n{'=' * 12} STARTING {label.upper()} {'=' * 12}", flush=True
+                    )
                     step_start = time.perf_counter()
                     if model_key == "kmeans":
-                        run_function(data)  # clustering is not a validated model, so nothing goes into the state
+                        run_function(
+                            data
+                        )  # clustering is not a validated model, so nothing goes into the state
                     else:
                         if model_key == "knn":
                             run_function(data, state)
                         elif model_key == "nn":
                             run_function(
-                                data, state, {"epochs": args.nn_epochs},
-                                learning_rates=NN_LEARNING_RATES if args.nn_lr is None else (args.nn_lr,),
+                                data,
+                                state,
+                                {"epochs": args.nn_epochs},
+                                learning_rates=(
+                                    NN_LEARNING_RATES
+                                    if args.nn_lr is None
+                                    else (args.nn_lr,)
+                                ),
                             )
                         elif model_key == "dt":
                             run_function(
-                                data, state, {"min_samples_split": args.dt_min_samples_split},
-                                depths=DT_DEPTHS if args.dt_max_depth is None else (args.dt_max_depth,),
+                                data,
+                                state,
+                                {"min_samples_split": args.dt_min_samples_split},
+                                depths=(
+                                    DT_DEPTHS
+                                    if args.dt_max_depth is None
+                                    else (args.dt_max_depth,)
+                                ),
                             )
                         else:
-                            run_function(data, state, {
-                                "n_trees": args.rf_n_trees,
-                                "max_depth": args.rf_max_depth,
-                                "min_samples_split": args.rf_min_samples_split,
-                            })
-                        save_state(state)  # keep finished experiments even if a later step fails
+                            run_function(
+                                data,
+                                state,
+                                {
+                                    "n_trees": args.rf_n_trees,
+                                    "max_depth": args.rf_max_depth,
+                                    "min_samples_split": args.rf_min_samples_split,
+                                },
+                            )
+                        save_state(
+                            state
+                        )  # keep finished experiments even if a later step fails
                     durations[label] = time.perf_counter() - step_start
                     print(f"COMPLETED {label} in {durations[label]:.1f}s", flush=True)
 
@@ -156,22 +217,37 @@ def main(argv=None):
                         if result is not None:
                             print(
                                 f"  {model_key:4s} | accuracy={result['acc']:.4f} "
-                                f"| parameters={result['params']}", flush=True,
+                                f"| parameters={result['params']}",
+                                flush=True,
                             )
-                    candidates = [key for key in ("knn", "nn", "dt", "rf") if key in available]
+                    candidates = [
+                        key for key in ("knn", "nn", "dt", "rf") if key in available
+                    ]
                     if candidates:
                         winner = max(candidates, key=lambda key: available[key]["acc"])
-                        print(f"  BEST FOR SUBMISSION: {winner} "
-                              f"({available[winner]['acc']:.4f})", flush=True)
+                        print(
+                            f"  BEST FOR SUBMISSION: {winner} "
+                            f"({available[winner]['acc']:.4f})",
+                            flush=True,
+                        )
                 print_results_table(state["best"])
                 print("\n=========== RUNNING TIMES ===========", flush=True)
                 for name, seconds in durations.items():
                     print(f"{name:24s} {seconds:7.1f}s", flush=True)
-                print(f"{'TOTAL':24s} {time.perf_counter() - program_start:7.1f}s", flush=True)
-                print(f"Results saved in results.json; output log: {log_path.name}", flush=True)
+                print(
+                    f"{'TOTAL':24s} {time.perf_counter() - program_start:7.1f}s",
+                    flush=True,
+                )
+                print(
+                    f"Results saved in results.json; output log: {log_path.name}",
+                    flush=True,
+                )
             except Exception as exc:
                 print(f"\nFAILED: {type(exc).__name__}: {exc}", flush=True)
-                print(f"See output above and {log_path.name} for the last completed step.", flush=True)
+                print(
+                    f"See output above and {log_path.name} for the last completed step.",
+                    flush=True,
+                )
                 raise
 
 

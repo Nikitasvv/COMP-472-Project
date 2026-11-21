@@ -30,7 +30,7 @@ Best k-NN: {'k': 100, 'metric': 'euclidean', 'weighted': True, 'scaling': 'none'
 Accuracy: 0.5979166666666667
 
 Saved results.json and results_knn.json
-COMPLETED k-NN in 15.1s
+COMPLETED k-NN in 17.6s
 
 ============ STARTING NEURAL NETWORK ============
 
@@ -44,3 +44,290 @@ Epoch [20/100] - Loss: 0.8157 | Validation Accuracy: 24.90%
 Epoch [30/100] - Loss: 0.6078 | Validation Accuracy: 23.70%
 Epoch [40/100] - Loss: 0.5245 | Validation Accuracy: 23.62%
 Epoch [50/100] - Loss: 0.4452 | Validation Accuracy: 23.30%
+Epoch [60/100] - Loss: 0.3929 | Validation Accuracy: 23.10%
+Epoch [70/100] - Loss: 0.3436 | Validation Accuracy: 22.80%
+Epoch [80/100] - Loss: 0.3388 | Validation Accuracy: 22.20%
+Epoch [90/100] - Loss: 0.2883 | Validation Accuracy: 23.12%
+Epoch [100/100] - Loss: 0.2846 | Validation Accuracy: 22.88%
+Final Validation Accuracy for Image Neural Network: 22.88%
+neural network (image, lr=0.01): Accuracy: 22.88% | Time: 18.7s
+
+===== NEURAL NETWORK: IMAGE (learning rate 0.001) =====
+Hyperparameters: {'hidden_size': 64, 'learning_rate': 0.001, 'epochs': 100, 'batch_size': 256, 'scaling': 'standardize'}
+
+--- Training Image Neural Network ---
+Epoch [1/100] - Loss: 3.7837 | Validation Accuracy: 15.32%
+Epoch [10/100] - Loss: 1.7430 | Validation Accuracy: 30.25%
+Epoch [20/100] - Loss: 1.2534 | Validation Accuracy: 28.57%
+Epoch [30/100] - Loss: 1.0003 | Validation Accuracy: 27.82%
+Epoch [40/100] - Loss: 0.8268 | Validation Accuracy: 26.77%
+Epoch [50/100] - Loss: 0.6912 | Validation Accuracy: 26.12%
+Epoch [60/100] - Loss: 0.5824 | Validation Accuracy: 25.68%
+Epoch [70/100] - Loss: 0.4915 | Validation Accuracy: 25.10%
+Epoch [80/100] - Loss: 0.4107 | Validation Accuracy: 24.77%
+Epoch [90/100] - Loss: 0.3420 | Validation Accuracy: 24.55%
+Epoch [100/100] - Loss: 0.2817 | Validation Accuracy: 24.38%
+Final Validation Accuracy for Image Neural Network: 24.38%
+neural network (image, lr=0.001): Accuracy: 24.38% | Time: 14.4s
+
+===== NEURAL NETWORK: IMAGE (learning rate 0.0001) =====
+Hyperparameters: {'hidden_size': 64, 'learning_rate': 0.0001, 'epochs': 100, 'batch_size': 256, 'scaling': 'standardize'}
+
+--- Training Image Neural Network ---
+Epoch [1/100] - Loss: 3.9241 | Validation Accuracy: 2.90%
+Epoch [10/100] - Loss: 3.5053 | Validation Accuracy: 16.15%
+Epoch [20/100] - Loss: 3.0298 | Validation Accuracy: 21.32%
+Epoch [30/100] - Loss: 2.6677 | Validation Accuracy: 24.88%
+Epoch [40/100] - Loss: 2.3995 | Validation Accuracy: 27.23%
+Epoch [50/100] - Loss: 2.1975 | Validation Accuracy: 28.48%
+Epoch [60/100] - Loss: 2.0410 | Validation Accuracy: 28.68%
+Epoch [70/100] - Loss: 1.9154 | Validation Accuracy: 29.25%
+Epoch [80/100] - Loss: 1.8114 | Validation Accuracy: 29.40%
+Epoch [90/100] - Loss: 1.7229 | Validation Accuracy: 29.73%
+Epoch [100/100] - Loss: 1.6460 | Validation Accuracy: 29.73%
+Final Validation Accuracy for Image Neural Network: 29.73%
+neural network (image, lr=0.0001): Accuracy: 29.73% | Time: 15.2s
+
+===== NEURAL NETWORK: SENTIMENT (learning rate 0.01) =====
+Hyperparameters: {'hidden_size': 64, 'learning_rate': 0.01, 'epochs': 100, 'batch_size': 256, 'scaling': 'standardize'}
+
+--- Training Sentiment Neural Network ---
+Epoch [1/100] - Loss: 0.8133 | Validation Accuracy: 65.88%
+Epoch [10/100] - Loss: 0.2590 | Validation Accuracy: 62.29%
+Epoch [20/100] - Loss: 0.1170 | Validation Accuracy: 61.42%
+Epoch [30/100] - Loss: 0.0785 | Validation Accuracy: 60.92%
+Epoch [40/100] - Loss: 0.0199 | Validation Accuracy: 61.25%
+Epoch [50/100] - Loss: 0.0001 | Validation Accuracy: 61.62%
+Epoch [60/100] - Loss: 0.0001 | Validation Accuracy: 61.67%
+Epoch [70/100] - Loss: 0.0001 | Validation Accuracy: 61.67%
+Epoch [80/100] - Loss: 0.0001 | Validation Accuracy: 61.71%
+Epoch [90/100] - Loss: 0.0000 | Validation Accuracy: 61.71%
+Epoch [100/100] - Loss: 0.0000 | Validation Accuracy: 61.75%
+Final Validation Accuracy for Sentiment Neural Network: 61.75%
+neural network (sentiment, lr=0.01): Accuracy: 61.75% | Time: 9.4s
+
+===== NEURAL NETWORK: SENTIMENT (learning rate 0.001) =====
+Hyperparameters: {'hidden_size': 64, 'learning_rate': 0.001, 'epochs': 100, 'batch_size': 256, 'scaling': 'standardize'}
+
+--- Training Sentiment Neural Network ---
+Epoch [1/100] - Loss: 0.8388 | Validation Accuracy: 66.25%
+Epoch [10/100] - Loss: 0.3774 | Validation Accuracy: 64.83%
+Epoch [20/100] - Loss: 0.1169 | Validation Accuracy: 65.17%
+Epoch [30/100] - Loss: 0.0325 | Validation Accuracy: 64.62%
+Epoch [40/100] - Loss: 0.0137 | Validation Accuracy: 64.67%
+Epoch [50/100] - Loss: 0.0074 | Validation Accuracy: 64.42%
+Epoch [60/100] - Loss: 0.0044 | Validation Accuracy: 64.50%
+Epoch [70/100] - Loss: 0.0029 | Validation Accuracy: 64.50%
+Epoch [80/100] - Loss: 0.0020 | Validation Accuracy: 64.58%
+Epoch [90/100] - Loss: 0.0015 | Validation Accuracy: 64.62%
+Epoch [100/100] - Loss: 0.0041 | Validation Accuracy: 64.21%
+Final Validation Accuracy for Sentiment Neural Network: 64.21%
+neural network (sentiment, lr=0.001): Accuracy: 64.21% | Time: 9.1s
+
+===== NEURAL NETWORK: SENTIMENT (learning rate 0.0001) =====
+Hyperparameters: {'hidden_size': 64, 'learning_rate': 0.0001, 'epochs': 100, 'batch_size': 256, 'scaling': 'standardize'}
+
+--- Training Sentiment Neural Network ---
+Epoch [1/100] - Loss: 1.0429 | Validation Accuracy: 54.88%
+Epoch [10/100] - Loss: 0.6941 | Validation Accuracy: 65.92%
+Epoch [20/100] - Loss: 0.6156 | Validation Accuracy: 66.79%
+Epoch [30/100] - Loss: 0.5578 | Validation Accuracy: 67.04%
+Epoch [40/100] - Loss: 0.5045 | Validation Accuracy: 66.50%
+Epoch [50/100] - Loss: 0.4548 | Validation Accuracy: 66.54%
+Epoch [60/100] - Loss: 0.4074 | Validation Accuracy: 66.21%
+Epoch [70/100] - Loss: 0.3625 | Validation Accuracy: 66.17%
+Epoch [80/100] - Loss: 0.3212 | Validation Accuracy: 65.96%
+Epoch [90/100] - Loss: 0.2827 | Validation Accuracy: 65.54%
+Epoch [100/100] - Loss: 0.2477 | Validation Accuracy: 65.08%
+Final Validation Accuracy for Sentiment Neural Network: 65.08%
+neural network (sentiment, lr=0.0001): Accuracy: 65.08% | Time: 8.8s
+
+================================
+NEURAL NETWORK RESULTS (best learning rate per task)
+================================
+Image Accuracy: 29.73% (learning rate 0.0001)
+Sentiment Accuracy: 65.08% (learning rate 0.0001)
+Average Accuracy: 47.40%
+Results will be saved in results.json and experiment_state.pkl
+
+Saved results.json and results_knn.json
+COMPLETED Neural Network in 75.6s
+
+============ STARTING DECISION TREE ============
+
+========== DECISION TREE EXPERIMENT ==========
+Parameters: {'max_depth': None, 'min_samples_split': 2, 'max_features': None, 'seed': 123, 'scaling': 'none'}
+Depths tested: [5, 10, 20, None] (one tree is fitted, then cut at each depth)
+
+--- IMAGE Decision Tree ---
+Tree fitted in 144.9s (grew to depth 161)
+ max_depth  train acc    val acc
+         5      0.058      0.050
+        10      0.086      0.058
+        20      0.187      0.103
+      None      1.000      0.119
+Best decision tree (image): None -> validation accuracy 11.90%
+
+--- SENTIMENT Decision Tree ---
+Tree fitted in 29.8s (grew to depth 29)
+ max_depth  train acc    val acc
+         5      0.530      0.500
+        10      0.828      0.474
+        20      0.998      0.444
+      None      1.000      0.444
+Best decision tree (sentiment): 5 -> validation accuracy 49.96%
+Saved figures/dt_depth.png
+Decision Tree results will be saved to results.json and experiment_state.pkl
+
+Saved results.json and results_knn.json
+COMPLETED Decision Tree in 175.2s
+
+============ STARTING RANDOM FOREST ============
+
+========== RANDOM FOREST EXPERIMENT ==========
+Parameters: {'n_trees': 100, 'max_depth': None, 'min_samples_split': 2, 'seed': 123, 'scaling': 'none'}
+Forest sizes tested: [10, 50, 100]
+
+--- IMAGE Random Forest ---
+Tree [1/100] trained
+Tree [10/100] trained
+Tree [20/100] trained
+Tree [30/100] trained
+Tree [40/100] trained
+Tree [50/100] trained
+Tree [60/100] trained
+Tree [70/100] trained
+Tree [80/100] trained
+Tree [90/100] trained
+Tree [100/100] trained
+Forest trained in 574.6s
+Random Forest image with  10 trees: validation accuracy 15.20%
+Random Forest image with  50 trees: validation accuracy 25.85%
+Random Forest image with 100 trees: validation accuracy 29.78%
+Best single decision tree (image): 11.90%
+
+--- SENTIMENT Random Forest ---
+Tree [1/100] trained
+Tree [10/100] trained
+Tree [20/100] trained
+Tree [30/100] trained
+Tree [40/100] trained
+Tree [50/100] trained
+Tree [60/100] trained
+Tree [70/100] trained
+Tree [80/100] trained
+Tree [90/100] trained
+Tree [100/100] trained
+Forest trained in 111.9s
+Random Forest sentiment with  10 trees: validation accuracy 52.79%
+Random Forest sentiment with  50 trees: validation accuracy 57.75%
+Random Forest sentiment with 100 trees: validation accuracy 60.29%
+Best single decision tree (sentiment): 49.96%
+Saved figures/rf_trees.png
+Random Forest results will be saved to results.json and experiment_state.pkl
+
+Saved results.json and results_knn.json
+COMPLETED Random Forest in 689.3s
+
+============ STARTING CLUSTERING (K-MEANS) ============
+
+++++ Clustering: k-Means on the sentiment data ++++
+9600 points, 768 features
+Saved kmeans_results.csv
+
+  k        inertia   purity
+  2       258486.4    0.392
+  3       252201.5    0.389
+  4       247099.2    0.425
+  5       242973.5    0.422
+  6       240205.6    0.419
+Note: purity tends to rise when k rises, so the highest purity is not automatically the best k.
+Saved figures/kmeans_inertia.png
+
+k=3: clusters (rows) vs true sentiment (columns)
+            Negative   Neutral  Positive
+ cluster 0      1117      1201       676
+ cluster 1      1141       858      1182
+ cluster 2       940      1133      1352
+COMPLETED Clustering (k-Means) in 29.1s
+
+=========== ERROR ANALYSIS ===========
+
+--- IMAGE: k-NN error analysis ---
+Best parameters: {'k': 1, 'metric': 'cosine', 'weighted': False, 'scaling': 'standardize'}
+Accuracy: 0.547 | Macro F1: 0.542
+Incorrect predictions: 1811 / 4000
+
+Five hardest image classes (lowest recall):
+       precision  recall  f1-score  support
+class                                      
+23         0.659   0.358     0.464     81.0
+22         0.702   0.367     0.482     90.0
+27         0.408   0.431     0.419     72.0
+4          0.609   0.438     0.509     96.0
+9          0.514   0.444     0.477     81.0
+
+Five most common mistakes (actual -> predicted):
+ actual_label  predicted_label  count
+            4                2     20
+           12               25      7
+           37               38      7
+            3                2      7
+           16               15      6
+Files saved in: C:\Users\Nick\Desktop\DONEE\results\erroranalysis_knn\image
+
+--- SENTIMENT: k-NN error analysis ---
+Best parameters: {'k': 100, 'metric': 'euclidean', 'weighted': True, 'scaling': 'none'}
+Accuracy: 0.598 | Macro F1: 0.578
+Incorrect predictions: 965 / 2400
+
+Precision, recall and F1 for each sentiment class:
+          precision  recall  f1-score  support
+class                                         
+Negative      0.590   0.786     0.674    802.0
+Neutral       0.631   0.317     0.422    808.0
+Positive      0.593   0.695     0.640    790.0
+
+Five most common mistakes (actual -> predicted):
+ actual_label  predicted_label  count
+            1                0    285
+            1                2    267
+            2                0    153
+            0                2    110
+            2                1     88
+Files saved in: C:\Users\Nick\Desktop\DONEE\results\erroranalysis_knn\sentiment
+
+Saved results.json and results_knn.json
+
+=========== FINAL VALIDATION RESULTS ===========
+
+IMAGE
+  knn  | accuracy=0.5473 | parameters={'k': 1, 'metric': 'cosine', 'weighted': False, 'scaling': 'standardize'}
+  nn   | accuracy=0.2973 | parameters={'hidden_size': 64, 'learning_rate': 0.0001, 'epochs': 100, 'batch_size': 256, 'scaling': 'standardize'}
+  dt   | accuracy=0.1190 | parameters={'max_depth': None, 'min_samples_split': 2, 'max_features': None, 'seed': 123, 'scaling': 'none'}
+  rf   | accuracy=0.2978 | parameters={'n_trees': 100, 'max_depth': None, 'min_samples_split': 2, 'seed': 123, 'scaling': 'none'}
+  BEST FOR SUBMISSION: knn (0.5473)
+
+SENTIMENT
+  knn  | accuracy=0.5979 | parameters={'k': 100, 'metric': 'euclidean', 'weighted': True, 'scaling': 'none'}
+  nn   | accuracy=0.6508 | parameters={'hidden_size': 64, 'learning_rate': 0.0001, 'epochs': 100, 'batch_size': 256, 'scaling': 'standardize'}
+  dt   | accuracy=0.4996 | parameters={'max_depth': 5, 'min_samples_split': 2, 'max_features': None, 'seed': 123, 'scaling': 'none'}
+  rf   | accuracy=0.6029 | parameters={'n_trees': 100, 'max_depth': None, 'min_samples_split': 2, 'seed': 123, 'scaling': 'none'}
+  BEST FOR SUBMISSION: nn (0.6508)
+
+Method             Image Val Acc   Sentiment Val Acc
+k-NN                      54.73%              59.79%
+Decision Tree             11.90%              49.96%
+Random Forest             29.78%              60.29%
+Neural Network            29.73%              65.08%
+
+=========== RUNNING TIMES ===========
+Load data + split            0.4s
+k-NN                        17.6s
+Neural Network              75.6s
+Decision Tree              175.2s
+Random Forest              689.3s
+Clustering (k-Means)        29.1s
+Error analysis               0.0s
+TOTAL                      987.4s
+Results saved in results.json; output log: run_all_output.txt

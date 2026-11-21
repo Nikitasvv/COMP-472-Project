@@ -12,7 +12,7 @@ from utils import SEED, load_train, fit_predict
 
 DATA_DIR = "data" if os.path.isdir("data") else "."
 KNN_RESULTS_FILE = "results_knn.json"  # k-NN only
-ALL_RESULTS_FILE = "results.json"      # every model, written by run_all.py
+ALL_RESULTS_FILE = "results.json"  # every model, written by run_all.py
 
 start_time = time.time()
 random.seed(SEED)
@@ -26,7 +26,9 @@ names = {
 }
 
 # Prefer the combined results; fall back to the k-NN-only file if they do not exist
-results_file = ALL_RESULTS_FILE if os.path.exists(ALL_RESULTS_FILE) else KNN_RESULTS_FILE
+results_file = (
+    ALL_RESULTS_FILE if os.path.exists(ALL_RESULTS_FILE) else KNN_RESULTS_FILE
+)
 print("using results from", results_file)
 with open(results_file) as f:
     results = json.load(f)

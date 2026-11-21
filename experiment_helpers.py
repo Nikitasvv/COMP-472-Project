@@ -27,11 +27,16 @@ MODEL_NAMES = {
     "dt": "Decision Tree",
 }
 
-RESULTS_FILE = PROJECT_DIR / "results.json"  # best accuracy and parameters of every model
-KNN_RESULTS_FILE = PROJECT_DIR / "results_knn.json"  # same, k-NN only (read by make_submission.py as a fallback)
+RESULTS_FILE = (
+    PROJECT_DIR / "results.json"
+)  # best accuracy and parameters of every model
+KNN_RESULTS_FILE = (
+    PROJECT_DIR / "results_knn.json"
+)  # same, k-NN only (read by make_submission.py as a fallback)
 # Pickle with the full results including predictions, so each experiment can be
 # run on its own and combined with the others later
 STATE_FILE = PROJECT_DIR / "experiment_state.pkl"
+
 
 def _package_version(name):
     """Installed version of a package, read without importing it."""
@@ -58,7 +63,9 @@ def setup():
     """Seed the random generators and create the output folder for graphs."""
     random.seed(SEED)
     np.random.seed(SEED)
-    os.makedirs(PROJECT_DIR / "figures", exist_ok=True)  # test_knn.py and test_kmeans.py save graphs here
+    os.makedirs(
+        PROJECT_DIR / "figures", exist_ok=True
+    )  # test_knn.py and test_kmeans.py save graphs here
     print("Environment:", ENVIRONMENT, flush=True)
 
 
@@ -86,7 +93,8 @@ def load_data():
             "n_classes": int(labels.max()) + 1,  # labels run from 0 to n_classes - 1
         }
         print(
-            f"{task:9s} train {train_features.shape}  validation {val_features.shape}", flush=True
+            f"{task:9s} train {train_features.shape}  validation {val_features.shape}",
+            flush=True,
         )
 
     return data

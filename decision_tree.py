@@ -1,16 +1,28 @@
 """Decision tree classifier built from scratch with NumPy (Gini impurity)."""
+
 import numpy as np
 
 
 class _Node:
     """One node of the tree: internal nodes hold a split, leaves hold a class label."""
 
-    def __init__(self, *, feature=None, threshold=None, left=None, right=None, value=None, majority=None):
-        self.feature = feature      # index of the feature this node splits on
-        self.threshold = threshold  # samples with feature <= threshold go left, the rest go right
+    def __init__(
+        self,
+        *,
+        feature=None,
+        threshold=None,
+        left=None,
+        right=None,
+        value=None,
+        majority=None
+    ):
+        self.feature = feature  # index of the feature this node splits on
+        self.threshold = (
+            threshold  # samples with feature <= threshold go left, the rest go right
+        )
         self.left = left
         self.right = right
-        self.value = value          # predicted class (only set on leaves)
+        self.value = value  # predicted class (only set on leaves)
         # Most common class among the training samples that reached this node. Every node
         # keeps it so predict() can stop at any depth and still answer with a class.
         self.majority = majority
@@ -44,7 +56,7 @@ class ScratchDecisionTree:
         if m == 0:
             return 0.0
         probs = np.bincount(y, minlength=n_classes) / m
-        return 1.0 - np.sum(probs ** 2)
+        return 1.0 - np.sum(probs**2)
 
     def _candidate_features(self, n_features, rng):
         """Indices of the features this node is allowed to split on."""
@@ -124,8 +136,13 @@ class ScratchDecisionTree:
 
         left_child = self._build_tree(X[left_mask], y[left_mask], depth + 1, rng)
         right_child = self._build_tree(X[right_mask], y[right_mask], depth + 1, rng)
-        return _Node(feature=feat, threshold=thresh, left=left_child, right=right_child,
-                     majority=majority_class)
+        return _Node(
+            feature=feat,
+            threshold=thresh,
+            left=left_child,
+            right=right_child,
+            majority=majority_class,
+        )
 
     def fit(self, X, y):
         # float64 keeps the midpoint thresholds strictly between neighbouring values,
@@ -139,7 +156,8 @@ class ScratchDecisionTree:
 
     def _predict_row(self, x, node, max_depth):
         """Walk from the root towards a leaf, going left or right at every split.
-        With max_depth set, stop at that depth and answer with the node's majority class."""
+        With max_depth set, stop at that depth and answer with the node's majority class.
+        """
         depth = 0
         while not node.is_leaf() and (max_depth is None or depth < max_depth):
             node = node.left if x[node.feature] <= node.threshold else node.right
@@ -149,14 +167,19 @@ class ScratchDecisionTree:
     def predict(self, X, max_depth=None):
         """Predict class indices. max_depth cuts the fitted tree short, which gives the same
         predictions as refitting with that max_depth (as long as max_features is None, so no
-        randomness is involved). One fully grown tree can therefore be scored at many depths."""
+        randomness is involved). One fully grown tree can therefore be scored at many depths.
+        """
         if self.root is None:
             raise ValueError("The decision tree must be fitted before prediction")
         X = np.asarray(X, dtype=np.float64)
-        return np.array([self._predict_row(row, self.root, max_depth) for row in X], dtype=np.int64)
+        return np.array(
+            [self._predict_row(row, self.root, max_depth) for row in X], dtype=np.int64
+        )
 
     def depth(self):
         """Depth of the fitted tree (a single leaf has depth 0)."""
+
         def walk(node):
             return 0 if node.is_leaf() else 1 + max(walk(node.left), walk(node.right))
+
         return walk(self.root)

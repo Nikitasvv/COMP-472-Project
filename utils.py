@@ -11,21 +11,42 @@ SEED = 123
 
 def load_train(path):
     """Read a training CSV. Returns (features, labels, feature_column_names)."""
+
+    # Read the CSV file and store it in a DataFrame
     data = pd.read_csv(path)
-    # Every column named "feature_*" is an input; "label" is the target class
+
+    # Find all columns starting with "feature_" because these are the input features
     feature_columns = [c for c in data.columns if c.startswith("feature_")]
+
+    # Extract the feature values and convert them to 32-bit floating point numbers
     features = data[feature_columns].values.astype(np.float32)
+
+    # Extract the correct class labels and convert them to integers
     labels = data["label"].values.astype(int)
+
+    # Return the input features, class labels, and feature column names
     return features, labels, feature_columns
 
 
 def train_val_split(features, labels, val_fraction=0.20, seed=SEED):
     """Shuffle with a fixed seed, then split into training (80%) and validation (20%) sets."""
+
+    # Create a random number generator using the seed for reproducible results
     rng = np.random.default_rng(seed)
+
+    # Shuffle the row indices so the dataset is randomly divided
     shuffled_indices = rng.permutation(len(features))
+
+    # Calculate how many samples should be used for validation (20% by default)
     number_validation = int(len(features) * val_fraction)
+
+    # Select the first 20% of shuffled indices for validation
     validation_indices = shuffled_indices[:number_validation]
+
+    # Use the remaining 80% of shuffled indices for training
     training_indices = shuffled_indices[number_validation:]
+
+    # Return the training and validation features with their matching labels
     return (
         features[training_indices],
         features[validation_indices],
@@ -39,7 +60,9 @@ def fit_standardizer(train_features):
     Returns a function that applies those same values to any array, so validation
     and test data are scaled without leaking information from them."""
     mean = train_features.mean(axis=0)
-    std = train_features.std(axis=0) + 1e-8  # avoids dividing by zero for constant columns
+    std = (
+        train_features.std(axis=0) + 1e-8
+    )  # avoids dividing by zero for constant columns
 
     def standardize(features):
         return ((features - mean) / std).astype(np.float32)

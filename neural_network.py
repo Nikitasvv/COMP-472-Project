@@ -23,7 +23,6 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from utils import SEED, train_val_split, fit_standardizer
 
-
 # Resolve paths from this file's location rather than the terminal's current directory
 PROJECT_DIR = Path(__file__).resolve().parent
 DATA_DIR = PROJECT_DIR / "data" if (PROJECT_DIR / "data").is_dir() else PROJECT_DIR
@@ -68,7 +67,8 @@ def load_data(task):
 
 def create_dataloaders(X_train, y_train, X_val=None, y_val=None, batch_size=BATCH_SIZE):
     """Wrap the arrays in mini-batch loaders. The validation set is optional because
-    the final submission model trains on all labelled rows and has nothing to validate on."""
+    the final submission model trains on all labelled rows and has nothing to validate on.
+    """
     train_data = TensorDataset(
         torch.tensor(X_train, dtype=torch.float32),
         torch.tensor(y_train, dtype=torch.long),
@@ -105,8 +105,13 @@ def evaluate(model, val_loader):
 
 
 def train_and_evaluate(
-    model, train_loader, val_loader, title,
-    *, epochs=EPOCHS, learning_rate=LEARNING_RATE
+    model,
+    train_loader,
+    val_loader,
+    title,
+    *,
+    epochs=EPOCHS,
+    learning_rate=LEARNING_RATE,
 ):
     """Train the model and print progress. Returns (model, final accuracy in %).
     The accuracy is None when there is no validation loader."""
@@ -121,12 +126,14 @@ def train_and_evaluate(
 
         for X, y in train_loader:
             optimizer.zero_grad()
-            outputs = model(X)                  # forward pass
+            outputs = model(X)  # forward pass
             loss = criterion(outputs, y)
-            loss.backward()                     # backpropagation
-            optimizer.step()                    # update the weights
+            loss.backward()  # backpropagation
+            optimizer.step()  # update the weights
 
-            total_loss += loss.item() * len(X)  # weight by batch size so the last, smaller batch is averaged correctly
+            total_loss += loss.item() * len(
+                X
+            )  # weight by batch size so the last, smaller batch is averaged correctly
 
         avg_loss = total_loss / len(train_loader.dataset)
 
@@ -168,7 +175,7 @@ def predict(model, X_test, classes, batch_size=BATCH_SIZE):
 
     with torch.no_grad():
         for start in range(0, len(X_test), batch_size):
-            X = torch.tensor(X_test[start:start + batch_size], dtype=torch.float32)
+            X = torch.tensor(X_test[start : start + batch_size], dtype=torch.float32)
             predictions.append(model(X).argmax(dim=1).cpu().numpy())
 
     if not predictions:
@@ -213,8 +220,12 @@ def train_neural_network(params, train_features, train_labels, title="Neural Net
         output_size=len(classes),
     )
     model, _ = train_and_evaluate(
-        model, train_loader, None, title,
-        epochs=epochs, learning_rate=learning_rate,
+        model,
+        train_loader,
+        None,
+        title,
+        epochs=epochs,
+        learning_rate=learning_rate,
     )
     # Stored on the model so predict() can map outputs back to the real labels
     model.classes_ = classes
@@ -250,7 +261,10 @@ def train_validation_network(params, X_train, y_train, X_val, y_val, title):
         output_size=len(classes),
     )
     model, accuracy_percent = train_and_evaluate(
-        model, train_loader, val_loader, title,
+        model,
+        train_loader,
+        val_loader,
+        title,
         epochs=int(params.get("epochs", EPOCHS)),
         learning_rate=float(params.get("learning_rate", LEARNING_RATE)),
     )
@@ -280,9 +294,7 @@ def main():
         y_train = encode_labels(y_train, classes)
         y_val = encode_labels(y_val, classes)
 
-        train_loader, val_loader = create_dataloaders(
-            X_train, y_train, X_val, y_val
-        )
+        train_loader, val_loader = create_dataloaders(X_train, y_train, X_val, y_val)
 
         model = NeuralNetworkModel(
             input_size=X_train.shape[1],
@@ -291,17 +303,21 @@ def main():
         )
 
         model, accuracy = train_and_evaluate(
-            model, train_loader, val_loader,
+            model,
+            train_loader,
+            val_loader,
             title=f"{task.capitalize()} Neural Network",
         )
         results[task] = accuracy
 
         predictions = predict(model, X_test, classes)
 
-        task_results = pd.DataFrame({
-            "id": test_ids,
-            "label": predictions,
-        })
+        task_results = pd.DataFrame(
+            {
+                "id": test_ids,
+                "label": predictions,
+            }
+        )
         output_file = PROJECT_DIR / f"nn_{task}_predictions.csv"
         task_results.to_csv(output_file, index=False)
         print(f"Saved {output_file.name}", flush=True)

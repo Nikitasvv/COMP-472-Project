@@ -3,14 +3,23 @@
 Usage: python -u test_neuralnetwork.py
 This module is imported by run_all.py as well as run independently.
 """
+
 import time
 
 from experiment_helpers import (
-    TASKS, setup, load_data, load_state, save_state,
-    clear_model_results, record,
+    TASKS,
+    setup,
+    load_data,
+    load_state,
+    save_state,
+    clear_model_results,
+    record,
 )
 from neural_network import (
-    HIDDEN_SIZE, LEARNING_RATE, EPOCHS, BATCH_SIZE,
+    HIDDEN_SIZE,
+    LEARNING_RATE,
+    EPOCHS,
+    BATCH_SIZE,
     train_validation_network,
 )
 
@@ -38,14 +47,19 @@ def run_nn(data, state, params=None, learning_rates=NN_LEARNING_RATES):
         dataset = data[task]
         for learning_rate in learning_rates:
             run_params = {**params, "learning_rate": learning_rate}
-            print(f"\n===== NEURAL NETWORK: {task.upper()} (learning rate {learning_rate}) =====", flush=True)
+            print(
+                f"\n===== NEURAL NETWORK: {task.upper()} (learning rate {learning_rate}) =====",
+                flush=True,
+            )
             print(f"Hyperparameters: {run_params}", flush=True)
             start = time.perf_counter()
 
             model, score, predictions = train_validation_network(
                 run_params,
-                dataset["train_features"], dataset["train_labels"],
-                dataset["val_features"], dataset["val_labels"],
+                dataset["train_features"],
+                dataset["train_labels"],
+                dataset["val_features"],
+                dataset["val_labels"],
                 title=f"{task.capitalize()} Neural Network",
             )
             record(state["best"], task, "nn", run_params, score, predictions)
@@ -63,7 +77,10 @@ def run_nn(data, state, params=None, learning_rates=NN_LEARNING_RATES):
     print("================================", flush=True)
     for task in TASKS:
         best_lr = state["best"][task]["nn"]["params"]["learning_rate"]
-        print(f"{task.capitalize()} Accuracy: {task_accuracies[task]:.2f}% (learning rate {best_lr})", flush=True)
+        print(
+            f"{task.capitalize()} Accuracy: {task_accuracies[task]:.2f}% (learning rate {best_lr})",
+            flush=True,
+        )
     average_accuracy = sum(task_accuracies.values()) / len(task_accuracies)
     print(f"Average Accuracy: {average_accuracy:.2f}%", flush=True)
     print("Results will be saved in results.json and experiment_state.pkl", flush=True)
@@ -76,4 +93,6 @@ if __name__ == "__main__":
     start = time.perf_counter()
     run_nn(data, state)
     save_state(state)
-    print(f"\nNeural network finished in {time.perf_counter() - start:.1f}s", flush=True)
+    print(
+        f"\nNeural network finished in {time.perf_counter() - start:.1f}s", flush=True
+    )
